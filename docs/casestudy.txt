@@ -1,0 +1,396 @@
+--- p1
+SVSD COmpetition
+PeeplRemember the people you meet
+and their story .
+Emily Tang · scarlett wang · Vince lin 
+--- p2
+01 · Context
+Meeting people is easy .
+Remembering them is hard.
+At a conference
+You meet dozens of people in a few 
+hours. By day two the details blur: who 
+does what, who you promised an intro 
+to, who’s from your city.
+In a new city
+You meet people slowly over months, 
+but there’s no network to place them 
+in. You’re stuck at a name and a face.
+In your phone
+Contacts and LinkedIn keep a name 
+and a job title. They don’t keep the 
+story, or what you remember about 
+them.
+--- p3
+Dunbar’s number
+150Anthropologist Robin Dunbar proposed that people can 
+comfortably keep stable relationships with about 150 
+others, because of cognitive limits.
+With new tech and AI,
+why stop at 150? 150 you can keep in your head The rest of the people you’ve met
+--- p4
+02 · Who it’s for
+T ech-native young adults 
+who make a lot of 
+connections and want to 
+keep them.
+Founders, grad students, new arrivals, people who go to 
+events or are starting their lives in a new environment. 
+Social, busy, and already using their phone for everything.
+The problem: three gaps
+Memory gap
+Hard to remember everyone, and harder to 
+remember their stories.
+Follow-up gap
+You forget what you promised and when you last 
+talked.
+Tooling gap
+Contacts are too thin, social networks are public, 
+CRMs are too heavy.
+--- p5
+03 · Solution
+A private people log for 
+building and maintaining 
+social and professional 
+connections.
+--- p6
+03 · Solution
+From a list of people to something you can act on.
+Ask
+“Who should I reach out to?” Ask your 
+own notes before your next move.
+→ Capture
+Tell Peepl about them in one voice 
+note, right after you meet.
+→ Follow up
+Come back to who they are, who they 
+know, and what to say next.
+--- p7
+▶  Drop clip here
+peepl-01-capture
+Movies/Peepl/gif (or .mp4)
+Demo 1 · Capture
+T alk for 20 seconds, 
+right after you meet.
+VOICE NOTE
+“ Just met Jordan Lee at Climate Demo Day . Founder , they do 
+battery recycling for e-bikes. Aisha introduced us…”
+The checklist fills itself
+Name, where you met, what they do, who you both know, one thing to remember, the 
+follow-up.
+Mutuals link automatically
+“Aisha introduced us” connects Jordan to Aisha.
+Typing works too
+The keyboard switches to a note that fills the same checklist.
+--- p8
+Demo 2 · Come back later
+Who they are, 
+who they know , 
+what to say next.
+The story, not just the title
+Field notes and tags from the voice note, in your 
+words.
+Things to talk about
+The follow-up and the thing to remember become a 
+checklist.
+W here an d  w ho
+V iew map and V iew connections place J ordan in your 
+world.
+▶   Dro p  c li p  here
+peepl-01-capture  (second  half:  saved  →  
+profile)
+Movies/Peepl/gif  (or  .mp4)
+9:419:41
+Jordan Lee
+Founder @ [Startup] · Brooklyn
+Just met Work
+FIELD NOTES
+Building battery recycling for e-bikes. Grew up 
+in Seattle, just moved to Brooklyn. Climbs 
+Tuesdays.
+THINGS TO TALK ABOUT
+Intro to someone in hardware
+Climbs Tuesdays, wants a buddy
+View mapLOCATION
+From Lives
+Seattle Brooklyn
+Met
+Demo Day
+Log a moment 🎙
+--- p9
+▶  Drop clip here
+peepl-02-log-a-moment
+Movies/Peepl/gif (or .mp4)
+Demo 3 · Log a moment
+Every hangout updates their 
+story .
+VOICE NOTE · WEDNESDAY
+“ Just got coffee with Jordan near Union Square. They closed 
+their pre-seed round. I should intro them to Priya.”
+Same screen, new prompts
+What happened, something new, anything to follow up on.
+Closeness grows
+Jordan moves from Just met to Getting to know; his aura deepens.
+The follow-up lands on his profile
+“Intro to Priya” joins Things to talk about.
+--- p10
+Demo 4 · Ask Peepl
+Ask Peepl about your people.
+Natural-language search over your own notes: names, where you met, what they do, interests, 
+cities, closeness, and who knows who. It answers with people, why they match, and what to say.
+I want a climbing buddy . Who in the city can I reach out to?
+I’m in SF next month. Who can I grab a coffee with?
+A founder needs a hardware engineer . Who can I introduce?
+↑
+--- p11
+Ask 1 of 3 · Interest + city
+“I want a climbing buddy . Who in 
+the city can I reach out to?”
+What Peepl matches on
+interest: climbing lives in: New York closeness last talked
+Ranked people, not keyword hits
+Jordan said it himself on Monday, so he comes first.
+A reason and an opener
+Every result says why, and what to bring up.
+▶  Drop clip here
+peepl-03-ask-climbing-buddy
+Movies/Peepl/gif (or .mp4)
+--- p12
+▶  Drop clip here
+peepl-04-ask-sf-trip
+Movies/Peepl/gif (or .mp4)
+Ask 2 of 3 · Place + time
+“I’m traveling to SF next month. 
+Who can I grab a coffee with?”
+What Peepl matches on
+lives in: San Francisco last talked open follow-ups
+Catch-ups surface themselves
+Daniel hasn’t heard from you in 8 weeks; the trip is the reason to reach out.
+It connects the dots
+Priya is also the intro you promised Jordan on Wednesday.
+--- p13
+Ask 3 of 3 · Who knows who
+“I just met a founder looking for a 
+hardware engineer . Who can I 
+introduce?”
+What Peepl matches on
+what they do: hardware mutuals what they said they want
+DRAFT INTRO · JORDAN ↔ ANA
+Hi Ana, meet Jordan Lee. He’s building battery recycling for e-bikes and is 
+looking for a hardware engineer. You mentioned wanting to advise early 
+founders, so I thought of you two.
+PEEPL DRAFTS IT. YOU DECIDE WHETHER TO SEND.
+▶  Drop clip here
+peepl-05-ask-hardware-intro
+Movies/Peepl/gif (or .mp4)
+--- p14
+9:41
+Friday, November 6
+9:41
+Peepl · after Climate Demo Day
+Who did you meet? 3 attendees from your 
+calendar.
+Peepl · follow-up
+You told Jordan you’d intro someone in 
+hardware. Ana Ruiz is a match.
+Peepl · before your trip
+You’re in SF Nov 12. Daniel and Priya live there.
+Demo 5 · Nudges NEXT
+Every person has a next step, 
+and Peepl brings it to you.
+After an event
+Your calendar asks who you met, with attendees pre-filled.
+When you promised something
+The follow-up you logged comes back with a match.
+Before a trip
+P eople in that city, and who you ’ re overdue with.
+--- p15
+Process
+How we got here: six steps, three rounds of 
+feedback.
+01
+Define
+02
+Explore profiles
+03
+Explore capture
+04
+Design system
+05
+Prototype
+06
+Feedback → Ask
+PRD: who it’s for, three 
+gaps, goals and non-
+goals
+5 directions, A to E 5 steps, 13 variants Moodboard to tokens: 
+color means 
+relationship
+Coded, used, revised 
+three times
+Judges asked why 
+keep a list; we made it 
+actionable
+--- p16
+Process 1/6 · Define
+We wrote down what Peepl is, and what it isn’t.
+GOALS
+Add a person in under 30 seconds
+NON-GOALS
+A social network, public profiles or a 
+feed
+Passive recording or always-on 
+capture
+Sharing your log with other people
+HOW IT SHOULD FEEL
+Capture feels like a voice memo, not a 
+form
+Warm, not transactionalFind anyone by name, place, work, 
+interest or closeness
+Nudge follow-ups so no connection 
+goes cold by accident
+Show the network, don’t list it
+People first: faces and stories over 
+fields
+Obvious that this space is only yoursSales pipelines or team CRMs
+Keep everything private
+--- p17
+Process 2/6 · Explore the profile
+Five directions for one profile. We kept a piece of 
+four .
+DIRECTION A
+Story first
+DIRECTION B
+Passport + stamps
+DIRECTION C
+Context lens
+DIRECTION D
+Journal first
+DIRECTION E
+Orbit
+The story leads; the job 
+title comes second.
+A nickname in your 
+words; moments as 
+stamps.
+Layout shifts with how 
+you met: work vs social.
+A timeline and “it’s been 
+23 days, reach out”.
+The profile as a small 
+network around them.
+field notes up top
+Kept
+too playful to trust
+Dropped
+color = how you know them
+Kept
+moments and nudges
+Kept
+mutuals →  the mindmap
+Kept
+PA S TE F RO M  F I GMA
+P eepl-draft  · frames  A – E (node  7:57,  7: 2 00,  8:91,  9:111,  9: 22 1)
+--- p18
+Process 3/6 · Explore capture
+Five steps, thirteen variants, one flow .
+Event prompt A
+Home nudge card
+B
+Attendee picker Nudges, next
+Recording A
+Orb + prompts checklist
+B
+Transcript first Ships
+Manual A
+One light form
+B
+One question at a time
+C
+Write it like a note Ships: keyboard button
+Review A
+Chips by field
+B
+Preview + confirm
+C
+Match existing person Folded into the live checklist
+Saved A
+L and on profile + toast
+B
+J oins your network
+C
+Anyone else ? Ships: V ie w  pro fi le /  A dd another
+--- p19
+Process 4/6 · Design system
+A design system where color carries meaning.
+Soft Clean Mesh gradient Glass Blobs Textured Pastel
+Moodboard keywords. Feedback on v1: deeper, more vibrant, don’t be afraid of darker 
+tones.
+HUE = HOW YOU KNOW THEM DEPTH = HOW WELL YOU KNOW THEM
+Work Social Community Family & home Just met Getting to know Know well
+One core / wash / deep per relationship. Avatars, mindmap dots and 
+profile heroes all use it.
+Each logged moment deepens the aura. Type: Geist, -4% on headings; 
+Geist Mono for meta. (The serif was dropped.)
+--- p20
+Process 5/6 · Prototype rounds
+What changed once we used it.
+BEFORE AFTER
+Tap to talk, with pause and done
+WHY
+Holding for 20 seconds is tiringHold to talk →
+A separate typing screen → Keyboard button morphs voice into a note Quiet rooms; switch mid-thought
+One button after saving → View profile or Add another At events you add people in a row
+Moments open by default → Collapsed; the newest opens after logging The profile got long fast
+A + button next to search → The Ask mic adds people by voice too One way in for everything
+A map tab → Places live on the profile The mindmap answered “ who ”  better
+--- p21
+Process 6/6 · Feedback
+“Define the use case, the value, and the 
+scenarios where it helps.”
+Judges’ feedback. Our read: a list of people isn’t worth keeping unless you can act on it.
+01
+Log
+Capture and moments put the 
+story in.
+→
+02
+Ask
+Find the right people for a real 
+situation.
+→
+03
+Act
+Peepl drafts the message; you 
+send it.
+→
+04
+Close
+The follow-up ticks off on 
+their profile.
+↺  BACK TO LOG: EVERY ANSWER FEEDS THE NEXT QUESTION
+--- p22
+05 · Why Peepl
+Private and personal, by design.
+Contacts + LinkedIn
+A name and a job title
+Wearable/ Ambient AI
+Everything it hears
+Peepl
+The story you choose to tellREMEMBERS
+WHO SEES IT Your network, often publicly Only you Only you
+NEEDS OTHERS TO JOIN Yes: only as good as who’s on it No No: useful from the first 
+person
+HELPS YOU ACT Search by name Summaries after the fact Ask, intros, and nudges
+--- p23
+06 · Principles
+What makes a good record of a person?
+1 2Capture it while it’s fresh. Remember the story , not the title.
+Talk for 20 seconds right after the conversation. Where you met, what they care about, one thing to 
+bring up next time.
+3 4Make the follow-up easy . Keep it private.
+Every person has a next step and a nudge. It’s your notes on people, so no one else sees them.
+--- p24
+PeeplRemember the story .
+Make the follow-up easy .
+Thank you · Questions?

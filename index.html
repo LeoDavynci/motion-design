@@ -1,0 +1,439 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style>html,body{margin:0;background:#1c1522}canvas{display:block}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+// Peepl launch film v8: 30s, 1920x1080, 60fps, 120 BPM (1 beat = 0.5s). Pure function of t.
+// Every phone screen is a REAL recording of the Peepl prototype (assets/live) played back by time; people stills in assets/people.
+// No timers, no Math.random, no CSS transitions.
+import { spring, clamp } from './lib/motion.js';
+import { BARS } from './assets/figma/profile_meta.js';
+import { createPhone3D } from './lib/iphone3d.js';
+const W = 1920, H = 1080, MAIN = document.getElementById('c').getContext('2d');
+let ctx = MAIN; // swapped to an offscreen context while baking / projecting 3D layers
+const INK = '#16121c', LIME = '#c6f04a', MUTED = '#5b5361';
+const HUES = ['#2f4fd0', '#ec5a32', '#e8c22e', '#d6347f', '#8d8590'];
+const F = 'Geist, system-ui, sans-serif', M = '"Geist Mono", ui-monospace, monospace';
+const sp = (t, k = 170, d = 26) => spring(t, k, d);
+const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const lerp = (a, b, x) => a + (b - a) * x;
+const hash = (i) => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }; // seeded
+
+// ---------- assets ----------
+const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const SCR = mk(786, 1704); // live screen texture for the 3D phone (2x of 393x852)
+let P3 = null;
+const load = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+const FG = {}, CARDS = [], PSC = mk(390, 844); let dotGrid, PROF = null;
+window.ready = (async () => {
+  P3 = createPhone3D(W, H);
+  await Promise.all([300, 400, 500, 600].map((w) => document.fonts.load(`${w} 100px Geist`)));
+  await document.fonts.load('400 20px "Geist Mono"');
+  const FRAMES = { mm_a: 'mm_a', mm_b: 'mm_b', map_in: 'map_in', add_voice: 'v7/add_voice', add_voice_live: 'v7/add_voice_live', add_processing: 'v7/add_processing', add_preview: 'v7/add_preview',
+    find_suggest: 'v7/find_suggest', find_query: 'v7/find_query', match1: 'v7/match1', match2: 'v7/match2', match3: 'v7/match3' };
+  await Promise.all(Object.entries(FRAMES).map(async ([k, p]) => { FG[k] = await load(`assets/figma/${p}.png`); }));
+  await Promise.all(Array.from({ length: 11 }, async (_, i) => { CARDS[i] = await load(`assets/figma/cards/c${String(i).padStart(2, '0')}.png`); }));
+  PROF = await load('assets/figma/audio_ready_v2.png');
+  dotGrid = mk(W, H); const g = dotGrid.getContext('2d'); g.fillStyle = 'rgba(22,18,28,0.10)';
+  for (let y = 14; y < H; y += 28) for (let x = 14; x < W; x += 28) g.fillRect(x, y, 2, 2);
+  window.seek(0);
+})();
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+// ---------- screen morphs: a new state dissolves in from a soft blur while the old one eases back ----------
+function stack(t, list, tr = 0.5) { // list = [[t, image, overlayFn], ...]
+  let i = 0; for (let j = 0; j < list.length; j++) if (t >= list[j][0]) i = j;
+  const p = i > 0 ? ease((t - list[i][0]) / tr) : 1, L = [];
+  if (i > 0 && p < 1) L.push({ im: list[i - 1][1], ov: list[i - 1][2] });
+  L.push({ im: list[i][1], ov: list[i][2], a: p, sc: 1 + 0.045 * (1 - p), blur: (1 - p) * 9 });
+  return L;
+}
+
+// ---------- backgrounds: a different palette per scene, changed by shaped wipes ----------
+function blobs(list, t) {
+  for (const [c, x, y, r, a, ph] of list) {
+    const cx = x + Math.sin(t * 0.3 + ph) * 90, cy = y + Math.cos(t * 0.25 + ph) * 70;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, c + a); g.addColorStop(1, c + '00');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+}
+const PAL = {
+  nA: { day: false, base: '#1c1522', blobs: [['#2f4fd0', 1550, 120, 1000, 'ee', 0], ['#ec5a32', 120, 1050, 900, 'cc', 2], ['#d6347f', 900, 1200, 600, '66', 4]] },
+  nB: { day: false, base: '#150f2a', blobs: [['#6a3df0', 300, 150, 1000, 'dd', 1], ['#d6347f', 1700, 950, 950, 'bb', 3], ['#2f4fd0', 1000, 1250, 700, '77', 5]] },
+  nC: { day: false, base: '#0b1a22', blobs: [['#1fa6a0', 1600, 200, 950, 'aa', 2], ['#2f4fd0', 200, 1000, 950, 'cc', 4], ['#e8c22e', 1000, 1250, 500, '44', 6]] },
+  nW: { day: false, base: '#2a1030', blobs: [['#ec5a32', 1500, 150, 1000, 'dd', 1], ['#d6347f', 200, 900, 1000, 'cc', 3], ['#f2a53c', 1000, 1250, 700, '88', 5]] },
+  dA: { day: true, base: '#f4efe7', grid: true, blobs: [['#dde3fb', 200, 150, 900, 'ff', 1], ['#fde0d4', 1700, 950, 900, 'ff', 3], ['#fadbe8', 1750, 60, 700, 'dd', 5], ['#fbf0c4', 300, 1000, 600, '99', 7]] },
+  dB: { day: true, base: '#eef3ee', grid: true, blobs: [['#cdeede', 1700, 200, 900, 'ff', 1], ['#d4e6fb', 200, 900, 900, 'ff', 3], ['#fbf0c4', 1000, 1100, 700, 'dd', 5], ['#fadbe8', 300, 100, 600, '99', 7]] }
+};
+function paint(key, t) { const P = PAL[key]; ctx.fillStyle = P.base; ctx.fillRect(0, 0, W, H); blobs(P.blobs, t); if (P.grid) ctx.drawImage(dotGrid, 0, 0); }
+const BGS = [[0, 'nA', null], [4.6, 'dA', 'diag'], [8.1, 'dB', 'circle'], [13.6, 'nW', 'curtain'], [15.6, 'nB', 'diagR'], [22.0, 'nC', 'circle'], [26.1, 'nA', 'diag']];
+function background(t) {
+  paint('nA', t);
+  for (let i = 1; i < BGS.length; i++) {
+    const [t0, key, style] = BGS[i], p = clamp((t - t0) / 0.8); if (p <= 0) continue;
+    if (p >= 1) { paint(key, t); continue; }
+    const e = ease(p); ctx.save(); ctx.beginPath();
+    if (style === 'diag') { const xe = lerp(-500, W + 500, e); ctx.moveTo(0, 0); ctx.lineTo(xe + 380, 0); ctx.lineTo(xe - 380, H); ctx.lineTo(0, H); }
+    else if (style === 'diagR') { const xe = lerp(W + 500, -500, e); ctx.moveTo(W, 0); ctx.lineTo(xe - 380, 0); ctx.lineTo(xe + 380, H); ctx.lineTo(W, H); }
+    else if (style === 'circle') { ctx.arc(1300, 540, lerp(0, 2300, e), 0, 7); }
+    else { const y = lerp(0, H + 60, e); ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, y); for (let x = W; x >= 0; x -= 120) ctx.lineTo(x, y + Math.sin(x * 0.01 + t * 6) * 26 * (1 - e)); ctx.lineTo(0, y); }
+    ctx.closePath(); ctx.clip(); paint(key, t); ctx.restore();
+  }
+}
+const isDay = (t) => { let d = false; for (const [t0, key] of BGS) if (t >= t0 + 0.4) d = PAL[key].day; return d; };
+
+// ---------- text: one word at a time on a soft curve, blur-to-sharp, faint glow. No masks. ----------
+// modes: arc | zoom | swing | drift | track.  Same base + disjoint [t0,t1] windows = in-place word swap.
+function words(parts, x, base, size, t, t0, t1, o = {}) {
+  const { w = 300, fam = F, ls = -0.04, col, mode = 'arc', gap = 0.1, hlDelay = 0.25, dur = 0.85 } = o;
+  if (t < t0 - 0.01 || t > t1 + 0.6) return;
+  const day_ = isDay(t), c0 = col || (day_ ? INK : '#fff'), out = ease((t - t1) / 0.4);
+  ctx.save(); ctx.font = `${w} ${size}px ${fam}`; ctx.textBaseline = 'alphabetic';
+  const toks = [];
+  for (const part of parts) { const [txt, st = {}] = typeof part === 'string' ? [part] : part; txt.split(/(\s+)/).forEach((s) => { if (s !== '') toks.push({ s, st }); }); }
+  let px = x, wi = 0;
+  const lsPx = ls * size; ctx.letterSpacing = `${lsPx.toFixed(2)}px`;
+  for (const k of toks) {
+    const wd = ctx.measureText(k.s).width;
+    if (/^\s+$/.test(k.s)) { px += wd; continue; }
+    const q = clamp((t - t0 - wi * gap) / dur), e = 1 - Math.pow(1 - q, 3), inv = 1 - e, a = e * (1 - out);
+    wi++;
+    if (a <= 0.003) { px += wd; continue; }
+    let dx = 0, dy = 0, sc = 1, rot = 0;
+    if (mode === 'arc') { dx = -inv * inv * size * 0.34 - inv * size * 0.06; dy = inv * inv * size * 0.62 + inv * size * 0.18; }
+    else if (mode === 'zoom') { sc = 1 + 0.12 * inv; dy = 0.1 * size * inv; }
+    else if (mode === 'swing') { rot = -7 * inv; dy = 0.42 * size * inv; }
+    else if (mode === 'drift') { dx = 0.55 * size * inv; dy = -Math.sin(inv * Math.PI) * 0.16 * size + 0.14 * size * inv; }
+    else if (mode === 'track') { ctx.letterSpacing = `${(lsPx + inv * 0.22 * size).toFixed(2)}px`; dy = 0.1 * size * inv; }
+    dy -= out * 0.16 * size;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(px + dx + wd / 2, base + dy - size * 0.3); ctx.rotate(rot * Math.PI / 180); ctx.scale(sc, sc); ctx.translate(-wd / 2, size * 0.3);
+    const hp = k.st.hl ? sp(t - t0 - (wi - 1) * gap - hlDelay, 220, 24) : 0;
+    if (k.st.hl) { ctx.fillStyle = LIME; ctx.fillRect(-size * 0.04, -size * 0.76, (wd + size * 0.08) * hp, size * 0.92); }
+    const blur = size * 0.11 * inv + size * 0.07 * out;
+    if (blur > 0.3) ctx.filter = `blur(${blur.toFixed(1)}px)`;
+    if (!day_ && inv > 0.02) { ctx.shadowColor = `rgba(255,255,255,${(0.6 * inv).toFixed(2)})`; ctx.shadowBlur = size * 0.4 * inv; }
+    ctx.fillStyle = (k.st.hl && hp > 0.35) ? INK : (k.st.c || c0); ctx.fillText(k.s, 0, 0);
+    ctx.restore();
+    if (mode === 'track') ctx.letterSpacing = `${lsPx.toFixed(2)}px`;
+    px += wd;
+  }
+  ctx.restore();
+}
+const eyebrow = (s, x, y, t, t0, t1) => words([s.toUpperCase()], x, y, 22, t, t0, t1, { w: 400, fam: M, ls: 0.14, mode: 'track', col: isDay(t) ? MUTED : 'rgba(255,255,255,0.62)' });
+function textWidth(str, size, w = 300, ls = -0.04) { ctx.save(); ctx.font = `${w} ${size}px ${F}`; ctx.letterSpacing = `${ls * size}px`; const m = ctx.measureText(str).width; ctx.restore(); return m; }
+
+// ---------- 3D projection: vertical strips with perspective (rotateY) ----------
+function proj(off, cx, cy, ry, rz = 0, a = 1, sc = 1, f = 1500) {
+  const OW = off.width, OH = off.height, s = Math.sin(ry * Math.PI / 180), c = Math.cos(ry * Math.PI / 180), step = 3;
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rz * Math.PI / 180); ctx.globalAlpha *= a;
+  for (let x = 0; x < OW; x += step) {
+    const lx = (x - OW / 2) * sc, d = f / (f - lx * s), xp = lx * c * d, wp = step * sc * c * d + 0.9, hp = OH * sc * d;
+    ctx.drawImage(off, x, 0, step, OH, xp, -hp / 2, wp, hp);
+  }
+  ctx.restore();
+}
+const cache = new Map();
+function bake(key, w, h, m, draw) {
+  if (cache.has(key)) return cache.get(key);
+  const c = mk(Math.ceil(w + 2 * m), Math.ceil(h + 2 * m)), prev = ctx; ctx = c.getContext('2d'); ctx.translate(m, m); draw(w, h); ctx = prev; cache.set(key, c); return c;
+}
+function cardShadow(w, h, r, fill, stroke) {
+  ctx.save(); ctx.shadowColor = 'rgba(8,4,14,0.30)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18; ctx.fillStyle = fill; rr(0, 0, w, h, r); ctx.fill(); ctx.restore();
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; rr(0, 0, w, h, r); ctx.stroke(); }
+}
+// the new Figma people cards (358x106, corner radius 20 at 1x)
+function personCard(i, scale) {
+  const w = 358 * scale, h = 106 * scale;
+  return bake(`pc${i}@${scale}`, w, h, 60, () => { cardShadow(w, h, 21 * scale, '#222'); ctx.save(); rr(0, 0, w, h, 21 * scale); ctx.clip(); ctx.drawImage(CARDS[i], 0, 0, w, h); ctx.restore(); });
+}
+
+// ---------- product: the screen content is drawn to a texture; lib/iphone3d.js wraps it in a real 3D iPhone 15 Pro ----------
+function screen(layers, o = {}) {
+  const { t = 0, taps = [], island = false } = o, prev = ctx; ctx = SCR.getContext('2d');
+  const sw = SCR.width, sh = SCR.height;
+  ctx.save(); ctx.clearRect(0, 0, sw, sh); ctx.translate(sw / 2, sh / 2);
+  ctx.fillStyle = '#f4efe7'; ctx.fillRect(-sw / 2, -sh / 2, sw, sh);
+  for (const L of layers) {
+    const aL = L.a === undefined ? 1 : L.a;
+    if (L.cv) { // a Figma-built screen, optionally as a sheet sliding up over what is behind it
+      const k = sw / 390, ty = (L.ty || 0) * k, rad = ty > 1 ? 46 * k : 0;
+      if (L.scrim) { ctx.fillStyle = `rgba(14,10,22,${L.scrim})`; ctx.fillRect(-sw / 2, -sh / 2, sw, sh); }
+      ctx.save(); ctx.beginPath(); ctx.roundRect(-sw / 2, -sh / 2 + ty, sw, sh - ty + 2, [rad, rad, 0, 0]); ctx.clip();
+      ctx.drawImage(L.cv, 0, 0, 390, 844, -sw / 2, -sh / 2 + ty, sw, sh); ctx.restore();
+      if (ty > 1) { ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.roundRect(-sw * 0.045, -sh / 2 + ty + 8 * k, sw * 0.09, 4 * k, 2 * k); ctx.fill(); }
+      continue;
+    }
+    ctx.save(); ctx.globalAlpha *= aL; if (L.sc) ctx.scale(L.sc, L.sc); if (L.blur > 0.3) ctx.filter = `blur(${L.blur.toFixed(1)}px)`;
+    if (L.im) ctx.drawImage(L.im, 4, 4, L.im.width - 8, L.im.height - 8, -sw / 2, -sh / 2, sw, sh);
+    if (L.ov) { ctx.filter = 'none'; ctx.save(); ctx.translate(-sw / 2, -sh / 2); ctx.scale(sw / 390, sh / 844); L.ov(); ctx.restore(); }
+    ctx.restore();
+  }
+  if (island) { ctx.fillStyle = '#000'; rr(-sw * 0.1575, -sh / 2 + sw * 0.028, sw * 0.315, sw * 0.092, sw * 0.046); ctx.fill(); }
+  for (const [t0, tfx, tfy] of taps) { // the thumb: a soft white dot that glides in, presses, ripples and lifts away
+    const u = t - t0; if (u < -0.9 || u > 0.9) continue;
+    const px = (tfx - 0.5) * sw, py = (tfy - 0.5) * sh, m = ease((u + 0.9) / 0.9), fade = u < 0.45 ? 1 : 1 - clamp((u - 0.45) / 0.45);
+    if (u >= 0) {
+      const ring2 = ease(u / 0.8);
+      ctx.strokeStyle = `rgba(255,255,255,${0.9 * (1 - ring2)})`; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(px, py, sw * (0.05 + 0.15 * ring2), 0, 7); ctx.stroke();
+      ctx.strokeStyle = `rgba(22,18,28,${0.18 * (1 - ring2)})`; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(px, py, sw * (0.056 + 0.15 * ring2), 0, 7); ctx.stroke();
+    }
+    const bob = Math.sin((u + 0.9) * 7) * (1 - m) * sw * 0.012, ax = px + (1 - m) * sw * 0.34, ay = py + (1 - m) * sh * 0.2 + bob, press = clamp(u / 0.1) * (1 - clamp((u - 0.22) / 0.22)), R = sw * 0.05 * (1 - 0.2 * press);
+    ctx.save(); ctx.globalAlpha = fade; ctx.shadowColor = 'rgba(10,6,20,0.32)'; ctx.shadowBlur = sw * 0.04; ctx.shadowOffsetY = sw * 0.012;
+    ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.beginPath(); ctx.arc(ax, ay, R, 0, 7); ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = 'rgba(22,18,28,0.14)'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+  }
+  ctx.restore(); ctx = prev;
+}
+function phone3(layers, cx, cy, sh, o = {}) { // true 3D: yaw (ry), pitch (rx), roll (rot), thickness, reflections
+  const { ry = 0, rx = 0, rot = 0, dx = 0, dy = 0, sc = 1, shadow = 0.42 } = o;
+  screen(layers, o);
+  P3.render(SCR, { cx: cx + dx, cy: cy + dy, sh, sc, rx, ry, rz: rot });
+  ctx.save(); ctx.shadowColor = `rgba(8,4,14,${shadow})`; ctx.shadowBlur = 90; ctx.shadowOffsetY = 46; ctx.drawImage(P3.canvas, 0, 0); ctx.restore();
+}
+function rig(t, t0, t1) { const e = sp(t - t0, 130, 17), x = ease((t - t1) / 0.38); return { dy: (1 - e) * H * 1.05 + x * x * H * 0.8 }; }
+function card(x, y, w, h, o = {}) {
+  const { dark = false, r = 28, solid = false } = o;
+  ctx.save(); ctx.shadowColor = 'rgba(8,4,14,0.22)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 18;
+  ctx.fillStyle = solid ? '#16121c' : dark ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.72)'; rr(x, y, w, h, r); ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.strokeStyle = dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2; rr(x, y, w, h, r); ctx.stroke(); ctx.restore();
+}
+function wrap(str, maxW, font) {
+  ctx.font = font; const out = []; let cur = '';
+  for (const w of str.split(' ')) { const tt = cur ? cur + ' ' + w : w; if (ctx.measureText(tt).width > maxW && cur) { out.push(cur); cur = w; } else cur = tt; }
+  out.push(cur); return out;
+}
+function leader(x0, y0, x1, y1, p, col = LIME) {
+  if (p <= 0) return; ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(lerp(x0, x1, p), lerp(y0, y1, p)); ctx.stroke();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x0, y0, 7, 0, 7); ctx.fill(); ctx.restore();
+}
+function callout(label, body, t, t0, t1, y, h = 200) {
+  const e = sp(t - t0, 170, 18), x = ease((t - t1) / 0.35); if (t < t0 - 0.01 || x >= 1) return;
+  const cx = 1500 + (1 - e) * 460 + x * 600, cy = y + (1 - e) * 40;
+  card(cx, cy, 380, h, { dark: true, r: 26 });
+  ctx.fillStyle = LIME; ctx.font = `500 18px ${M}`; ctx.letterSpacing = '2.4px'; ctx.fillText(label.toUpperCase(), cx + 28, cy + 42);
+  ctx.fillStyle = '#fff'; ctx.font = `300 26px ${F}`; ctx.letterSpacing = '-0.4px';
+  wrap(body, 320, `300 26px ${F}`).forEach((l, i) => ctx.fillText(l, cx + 28, cy + 88 + i * 34));
+  leader(cx, cy + h / 2, cx - 130, cy + h / 2, e);
+}
+function sparkle(cx, cy, R, rot, col) {
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 === 0 ? R : R * 0.26; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+  ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.restore();
+}
+
+// ---------- profile screen built from the updated Figma frame (108:5579): scroll, compact header, fixed composer, live playback overlay ----------
+const WORDS = ['Came across Jordan on my way home and he', 'said how much he hates his job search and that', 'the job market is cooked. He hates his current', 'job and wants out'].map((l) => l.split(' '));
+const NWORDS = WORDS.flat().length;
+function profileScreen(scroll, pl) { // pl = { p: 0..1 progress, on: playing } or null
+  const prev = ctx; ctx = PSC.getContext('2d'); const oy = -scroll;
+  ctx.clearRect(0, 0, 390, 844); ctx.fillStyle = '#f4f2ef'; ctx.fillRect(0, 0, 390, 844);
+  ctx.drawImage(PROF, 0, scroll, 390, 844, 0, 0, 390, 844);
+  if (pl) { // the moment card, redrawn live
+    const BG = '#fbfbfb';
+    ctx.fillStyle = BG; ctx.fillRect(22, 1090 + oy, 346, 94);
+    ctx.font = `400 15px ${F}`; ctx.letterSpacing = '-0.1px'; const fit = 302 / ctx.measureText(WORDS[0].join(' ')).width; ctx.font = `400 ${(15 * fit).toFixed(2)}px ${F}`;
+    let wi = 0; WORDS.forEach((line, li) => { let x = 31; line.forEach((w) => { const lit = clamp(pl.p * NWORDS * 1.04 - wi + 0.6); ctx.fillStyle = lit > 0.5 ? '#16121c' : '#9a979f'; ctx.fillText(w, x, 1107 + li * 22 + oy); x += ctx.measureText(w + ' ').width; wi++; }); });
+    ctx.fillStyle = BG; ctx.fillRect(66, 1198 + oy, 214, 38);
+    BARS.forEach((b, i) => { const done = i / BARS.length < pl.p; ctx.globalAlpha = pl.on ? (done ? 1 : 0.28) : 1; ctx.fillStyle = b.c; ctx.beginPath(); ctx.roundRect(b.x - b.w / 2, b.y0 + oy, b.w, b.y1 - b.y0 + 1, b.w / 2); ctx.fill(); }); ctx.globalAlpha = 1;
+    ctx.fillStyle = BG; ctx.fillRect(28, 1196 + oy, 40, 38); ctx.fillStyle = '#16121c'; ctx.beginPath(); ctx.arc(47, 1215 + oy, 15.5, 0, 7); ctx.fill(); ctx.fillStyle = '#fff';
+    if (pl.on) { ctx.fillRect(43, 1210 + oy, 3.4, 10); ctx.fillRect(48.6, 1210 + oy, 3.4, 10); } else { ctx.beginPath(); ctx.moveTo(44.5, 1209.5 + oy); ctx.lineTo(53, 1215 + oy); ctx.lineTo(44.5, 1220.5 + oy); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = BG; ctx.fillRect(324, 1204 + oy, 40, 22); ctx.fillStyle = '#5b5361'; ctx.font = `400 11px ${M}`; ctx.letterSpacing = '0px';
+    const el = pl.on ? Math.round(pl.p * 34) : 34, lab = pl.on ? `0:${String(el).padStart(2, '0')}` : '0:34'; ctx.fillText(lab, 356 - ctx.measureText(lab).width, 1219 + oy);
+  }
+  const ha = clamp((scroll - 70) / 110); // compact blue header once the hero scrolls away, as in the app
+  if (ha > 0) { ctx.save(); ctx.globalAlpha = ha; ctx.beginPath(); ctx.roundRect(0, 0, 390, 112, [0, 0, 26, 26]); ctx.clip(); ctx.drawImage(PROF, 0, 0, 390, 112, 0, 0, 390, 112); ctx.fillStyle = '#fff'; ctx.font = `500 18px ${F}`; ctx.letterSpacing = '-0.3px'; ctx.fillText('Jordan Lee', 195 - ctx.measureText('Jordan Lee').width / 2, 91); ctx.restore(); }
+  ctx.drawImage(PROF, 0, 1331, 390, 100, 0, 744, 390, 100); // fixed composer
+  ctx = prev; return PSC;
+}
+
+// ---------- live input drawn over the Figma frames (390x844 screen units) ----------
+const BOX = '#fbfaf9', TXT = '#5f5b66', TXT2 = '#a8a3ae';
+function bars(t, x0, x1, yc) {
+  ctx.fillStyle = BOX; ctx.fillRect(x0 - 8, yc - 16, x1 - x0 + 16, 32); ctx.fillStyle = '#2f4fd0';
+  for (let x = x0, i = 0; x <= x1; x += 6, i++) {
+    const env = 0.3 + 0.7 * Math.abs(Math.sin(t * 4.1 + i * 0.6)) * (0.55 + 0.45 * Math.sin(t * 2.3 + i * 1.7));
+    const h = 3 + 22 * env * (0.35 + 0.65 * hash(i + 7)); ctx.fillRect(x, yc - h / 2, 2.4, h);
+  }
+}
+function liveText(str, x, base, maxW, lh, pending, caret, t) {
+  const font = `400 14px ${F}`; ctx.font = font; ctx.letterSpacing = '-0.1px';
+  const ls = wrap(str, maxW, font); let lx = x, ly = base;
+  ls.forEach((l, i) => {
+    ly = base + i * lh;
+    if (pending && i === ls.length - 1 && l.includes(' ')) { const k = l.lastIndexOf(' '), head = l.slice(0, k + 1); ctx.fillStyle = TXT; ctx.fillText(head, x, ly); ctx.fillStyle = TXT2; ctx.fillText(l.slice(k + 1), x + ctx.measureText(head).width, ly); }
+    else { ctx.fillStyle = pending && i === ls.length - 1 ? TXT2 : TXT; ctx.fillText(l, x, ly); }
+    lx = x + ctx.measureText(l).width;
+  });
+  if (caret && Math.floor(t * 2.4) % 2 === 0) { ctx.fillStyle = INK; ctx.fillRect(lx + 1.5, ly - 12, 1.4, 16); }
+}
+// iOS keyboard key rectangles measured from the Figma frame (x, y, w, h)
+const KEYROWS = [['qwertyuiop', [7, 45, 84, 122, 160, 198, 237, 275, 313, 351], 563], ['asdfghjkl', [27, 65, 103, 141, 179, 217, 255, 293, 332], 617], ['zxcvbnm', [65, 103, 141, 179, 217, 255, 293], 671]];
+function keyRect(ch) { if (ch === ' ') return [105, 725, 180, 43]; for (const [row, xs, y] of KEYROWS) { const i = row.indexOf(ch.toLowerCase()); if (i >= 0) return [xs[i], y, 32, 43]; } return null; }
+function keyPop(ch, upper) { // the pressed key darkens and its magnified letter bubble rises above it, like iOS
+  const k = keyRect(ch); if (!k) return;
+  ctx.save(); ctx.fillStyle = 'rgba(150,152,172,0.5)'; ctx.beginPath(); ctx.roundRect(k[0], k[1], k[2], k[3], 8); ctx.fill();
+  if (ch !== ' ') { ctx.shadowColor = 'rgba(10,6,20,0.25)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(k[0] - 8, k[1] - 56, k[2] + 16, 60, 12); ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#16121c'; ctx.font = `400 30px ${F}`; ctx.letterSpacing = '0px'; const g = upper ? ch.toUpperCase() : ch; ctx.fillText(g, k[0] + k[2] / 2 - ctx.measureText(g).width / 2, k[1] - 14); }
+  ctx.restore();
+}
+
+// ---------- talking: dark voice-note card with a live waveform and words arriving one by one ----------
+const NOTE = 'Jordan Lee, met at Demo Day. Founder at [Startup], battery recycling for e-bikes. From Seattle, lives in Brooklyn now. Climbs Tuesdays. Owe them a hardware intro.'.split(' ');
+function voiceCard(t, x, y, w, h, n, live_) {
+  card(x, y, w, h, { dark: true, solid: true, r: 36 });
+  ctx.fillStyle = LIME; ctx.font = `500 20px ${M}`; ctx.letterSpacing = '2.8px'; ctx.fillText('VOICE NOTE', x + 40, y + 56);
+  ctx.save(); ctx.textBaseline = 'alphabetic'; ctx.font = `300 32px ${F}`; ctx.letterSpacing = '-0.6px';
+  const lines = wrap(NOTE.join(' '), w - 80, `300 32px ${F}`); let wi = 0;
+  lines.forEach((l, li) => { let px = x + 40; l.split(' ').forEach((wd) => { const sw = ctx.measureText(wd + ' ').width, k = clamp(n - wi), e = 1 - Math.pow(1 - clamp(k * 1), 3); if (e > 0.01) { ctx.save(); ctx.globalAlpha = e; ctx.translate(px, y + 108 + li * 44 + (1 - e) * 10); ctx.filter = e < 0.99 ? `blur(${((1 - e) * 5).toFixed(1)}px)` : 'none'; ctx.fillStyle = wi < n - 1 ? '#fff' : 'rgba(255,255,255,0.7)'; ctx.fillText(wd, 0, 0); ctx.restore(); } px += sw; wi++; }); });
+  ctx.restore();
+  const wy = y + h - 52, bars = 52; // live waveform, moving while the note is recorded
+  for (let i = 0; i < bars; i++) {
+    const amp = live_ ? 0.25 + 0.75 * Math.abs(Math.sin(t * 5.2 + i * 0.55)) * (0.55 + 0.45 * Math.sin(t * 2.9 + i * 1.3)) : 0.12, hh = 5 + 40 * amp * (0.4 + 0.6 * hash(i + 3));
+    ctx.fillStyle = live_ ? LIME : 'rgba(198,240,74,0.4)'; rr(x + 40 + i * 13.4, wy - hh / 2, 5, hh, 2.5); ctx.fill();
+  }
+}
+function timer(t, cx, cy, r, t0, t1) {
+  const p = clamp((t - t0) / (t1 - t0)), done = t >= t1, u = t - t1, ee = sp(t - t0 + 0.2, 200, 20);
+  if (t < t0 - 0.2) return;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(ee, ee);
+  ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(22,18,28,0.12)'; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
+  ctx.strokeStyle = done ? LIME : INK; ctx.beginPath(); ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); ctx.stroke();
+  if (done) { ctx.fillStyle = LIME; ctx.beginPath(); ctx.arc(0, 0, r - 7, 0, 7); ctx.fill(); }
+  if (!done) { ctx.fillStyle = INK; ctx.font = `300 64px ${F}`; ctx.letterSpacing = '-2px'; const s = String(Math.round(p * 20)); ctx.fillText(s, -ctx.measureText(s).width / 2, 16); ctx.font = `500 18px ${M}`; ctx.letterSpacing = '2px'; ctx.fillText('SEC', -22, 44); }
+  else { const k = ease(u / 0.35); ctx.strokeStyle = INK; ctx.lineWidth = 12; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-26, 2); ctx.lineTo(lerp(-26, -8, clamp(k * 2)), lerp(2, 22, clamp(k * 2))); if (k > 0.5) ctx.lineTo(lerp(-8, 30, (k - 0.5) * 2), lerp(22, -20, (k - 0.5) * 2)); ctx.stroke(); }
+  ctx.restore();
+  if (done && u < 1.6) {
+    for (let i = 0; i < 38; i++) {
+      const a = hash(i) * Math.PI * 2, v = 220 + hash(i + 40) * 420, x = cx + Math.cos(a) * v * u * 0.9, y = cy + Math.sin(a) * v * u * 0.9 + 520 * u * u, c = i % 6 === 5 ? LIME : HUES[i % 4];
+      ctx.save(); ctx.globalAlpha = 1 - clamp(u / 1.6); ctx.translate(x, y); ctx.rotate(u * (3 + hash(i + 80) * 8)); ctx.fillStyle = c; ctx.fillRect(-7, -4, 14, 8); ctx.restore();
+    }
+  }
+}
+
+// ---------- shots ----------
+function hook(t) { // 0 - 2.8
+  const cols = 29, rows = 23, sx = 780, sy = 120, gap = 38, ex = 1 - ease((t - 2.8) / 0.4);
+  for (let i = 0; i < cols * rows; i++) {
+    const x = sx + (i % cols) * gap, y = sy + Math.floor(i / cols) * gap;
+    if (i < 150) { const p = sp(t - i / 160, 260, 14), c = HUES[Math.floor(hash(i) * 4.99)]; ctx.fillStyle = p > 0.02 ? c : 'rgba(255,255,255,0.16)'; ctx.beginPath(); ctx.arc(x, y, (5 + 6 * Math.max(0, p)) * ex, 0, 7); ctx.fill(); }
+    else { const d = Math.hypot(x - sx, y - sy) / 1300, p = sp(t - (1.5 + d), 200, 18); ctx.fillStyle = `rgba(255,255,255,${0.16 + 0.42 * clamp(p)})`; ctx.beginPath(); ctx.arc(x, y, (5 + 2 * clamp(p)) * ex, 0, 7); ctx.fill(); }
+  }
+  eyebrow('The Dunbar number', 96, 190, t, -0.2, 2.8);
+  const s = 1 + 0.45 * (1 - sp(t + 0.18, 230, 15));
+  ctx.save(); ctx.translate(96, 540); ctx.scale(s, s); ctx.translate(-96, -540);
+  words(['150'], 96, 540, 400, t, -0.22, 2.8, { mode: 'zoom', dur: 0.5 }); ctx.restore();
+  words(['people you can keep'], 96, 650, 58, t, 0.35, 1.5, { mode: 'arc', gap: 0.08 }); words(['in your head.'], 96, 724, 58, t, 0.6, 1.5, { mode: 'arc', gap: 0.08 });
+  words(['The ', ['rest', { hl: true }], ' of the'], 96, 650, 58, t, 1.5, 2.8, { mode: 'drift', gap: 0.07, hlDelay: 0.3 }); words(["people you've met."], 96, 724, 58, t, 1.7, 2.8, { mode: 'drift', gap: 0.07 });
+}
+function problem(t) { // 2.8 - 5.0
+  words(['Meeting people'], 96, 440, 150, t, 2.8, 3.8, { mode: 'swing', gap: 0.1 }); words(['is easy.'], 96, 590, 150, t, 2.95, 3.8, { mode: 'swing', gap: 0.1 });
+  words(['Remembering'], 96, 440, 150, t, 3.8, 4.7, { mode: 'zoom', gap: 0.1 }); words(['them is ', ['hard.', { hl: true }]], 96, 590, 150, t, 3.95, 4.7, { mode: 'zoom', gap: 0.1, hlDelay: 0.2 });
+  const C = [['At a conference', 'By day two, the details blur.', 0, 22], ['In a new city', 'No network to place them in.', 2, -18], ['In your phone', 'A name and a job title. Not the story.', 3, 20]];
+  C.forEach(([a, b, hc, ry], i) => {
+    const t0 = 3.0 + i * 0.3, e = sp(t - t0, 150, 17), x = ease((t - 4.7 - i * 0.06) / 0.35); if (t < t0 - 0.01 || x >= 1) return;
+    const cv = bake('prob' + i, 600, 200, 60, (w, h) => {
+      cardShadow(w, h, 30, 'rgba(46,42,90,0.55)', 'rgba(255,255,255,0.28)');
+      ctx.fillStyle = HUES[hc]; ctx.beginPath(); ctx.arc(54, 58, 20, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = `500 42px ${F}`; ctx.letterSpacing = '-1.5px'; ctx.fillText(a, 92, 72);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = `400 28px ${F}`; ctx.letterSpacing = '-0.4px'; ctx.fillText(b, 40, 146);
+    });
+    ctx.save(); ctx.globalAlpha = 1 - x; proj(cv, 1600 + (1 - e) * 700 + x * 500 + (i === 1 ? -50 : 0), 210 + i * 290 + Math.sin(t * 1.4 + i) * 8, ry * (1 - 0.3 * x), -2 + i * 2); ctx.restore();
+  });
+}
+function reveal(t) { // 5.0 - 8.6: wordmark, 3D phone, the Figma mind map: tap a person, View, the profile slides up as a sheet
+  words([...'Peepl'], 96, 520, 360, t, 5.3, 8.6, { mode: 'arc', gap: 0.07, dur: 0.9 });
+  words(['Remember the people you meet'], 96, 650, 56, t, 5.8, 7.0, { mode: 'zoom', gap: 0.07 }); words(['and their ', ['story.', { hl: true }]], 96, 650, 56, t, 7.0, 8.6, { mode: 'arc', gap: 0.09, hlDelay: 0.3 });
+  const r = rig(t, 5.1, 8.6), tView = 7.35, sheet = sp(t - (tView + 0.05), 90, 16);
+  const layers = t < tView + 0.04 ? stack(t, [[5.0, FG.mm_a], [6.25, FG.mm_b]], 0.55) : [{ im: FG.mm_b }, { cv: profileScreen(0, null), ty: lerp(844, 170, sheet), scrim: 0.3 * sheet }];
+  phone3(layers, 1360, 560, 930, { t, island: true, ry: lerp(-40, 0, sp(t - 5.1, 70, 15)) + Math.sin(t * 0.9) * 2, rx: lerp(-8, 0, sp(t - 5.1, 60, 14)), dy: r.dy + Math.sin(t * 1.2) * 6, rot: lerp(4, 0, sp(t - 5.2, 90, 16)), taps: [[6.05, 0.324, 0.317], [tView, 0.52, 0.255]] });
+}
+const NOTE_S = 'Jordan Lee, met at Demo Day. Founder at [Startup], battery recycling for e-bikes. From Seattle, lives in Brooklyn now. Climbs Tuesdays. Owe them a hardware engineer intro.';
+function capture(t) { // 8.6 - 14.0: the voice flow from the Figma frames: words arrive over a moving waveform, 20 s timer, check + confetti
+  const tStart = 8.95, tStop = 12.2, nw = clamp((t - tStart) / 0.1, 0, NOTE.length);
+  eyebrow('01 · Capture', 96, 230, t, 8.8, 14.0);
+  words(['Talk for'], 96, 400, 140, t, 8.85, 14.0, { mode: 'arc', gap: 0.12 }); words([['20 seconds.', { hl: true }]], 96, 540, 140, t, 9.1, 14.0, { mode: 'track', hlDelay: 0.4 });
+  const ce = sp(t - 9.0, 150, 18), cx = ease((t - 13.3) / 0.3);
+  if (t > 8.9 && cx < 1) voiceCard(t, 96 - cx * 900, 640 + (1 - ce) * 400, 780, 330, nw, t > tStart && t < tStop);
+  timer(t, 1040, 800, 84, tStart, tStop);
+  const ovTalk = () => { ctx.fillStyle = BOX; ctx.fillRect(24, 636, 348, 86); bars(t, 54, 231, 749); if (nw > 0) liveText(NOTE.slice(0, Math.max(1, Math.floor(nw))).join(' '), 31, 656, 336, 19, nw < NOTE.length, false, t); };
+  const r = rig(t, 8.7, 14.0);
+  const layers = stack(t, [[8.6, FG.add_voice], [8.85, FG.add_voice_live, ovTalk], [12.4, FG.add_processing], [13.0, FG.add_preview]], 0.5);
+  phone3(layers, 1500, 560, 920, { t, island: true, dy: r.dy, ry: lerp(34, 10, sp(t - 8.7, 80, 15)) + Math.sin(t) * 2, rx: lerp(-6, 0, sp(t - 8.7, 60, 14)), rot: lerp(-4, 0, sp(t - 8.7, 90, 16)), taps: [[tStop, 0.742, 0.886]] });
+}
+const FIELD = [ // [card, x, y, ry, rz, scale]: eleven people, each card has its own colours and clay avatar
+  [0, 1530, 560, -8, -2, 1.05], [1, 1130, 230, 24, -4, 0.95], [2, 1560, 120, -18, 2, 0.9], [3, 1890, 280, -26, 3, 0.95], [4, 1120, 520, 20, 2, 1.0], [5, 1900, 610, -24, -3, 0.92],
+  [6, 1170, 810, 22, -2, 0.95], [7, 1560, 860, -16, 3, 1.0], [8, 1900, 940, -22, 2, 0.9], [9, 1300, 1040, 18, -3, 0.85], [10, 1700, 1040, -20, 2, 0.88]];
+const ENTRY = ['top', 'right', 'bottom'];
+function field(t) { // 14.0 - 16.1: people arrive from the top, the right and the bottom of the frame
+  words(['Every person.'], 96, 560, 130, t, 14.3, 15.2, { mode: 'drift', gap: 0.11 });
+  words(['Every ', ['story.', { hl: true }]], 96, 560, 130, t, 15.2, 16.1, { mode: 'arc', gap: 0.11, hlDelay: 0.3 });
+  const out = ease((t - 16.0) / 0.3); if (out >= 1) return;
+  FIELD.forEach(([ci, X, Y, ry, rz, s], i) => {
+    const edge = ENTRY[i % 3], t0 = 14.1 + i * 0.1, e = sp(t - t0, 95, 12.5); if (t < t0 - 0.01) return;
+    const flip = i % 2 ? 1 : -1, sx = edge === 'top' ? X + 140 * flip : edge === 'right' ? W + 480 : X + 160 * flip, sy = edge === 'top' ? -300 : edge === 'right' ? Y + 110 * flip : H + 300;
+    const spin = (edge === 'top' ? -22 : edge === 'right' ? 16 : 20) * (1 - e), yaw = (edge === 'right' ? -60 : 0) * (1 - e);
+    ctx.save(); ctx.globalAlpha = 1 - out; proj(personCard(ci, 1.3), lerp(sx, X, e), lerp(sy, Y, e) + Math.sin(t * 1.3 + i * 1.7) * 10 * e, ry * (0.5 + 0.5 * e) + yaw + Math.sin(t * 0.9 + i) * 4, rz + spin, 1, s * (1 + 0.1 * out)); ctx.restore();
+  });
+}
+function moments(t) { // 16.0 - 22.4: the updated profile slides up, grows full screen, scrolls to the moment; the voice note plays
+  eyebrow('02 · The story', 96, 230, t, 16.2, 22.4);
+  words(['It keeps the'], 96, 400, 120, t, 16.25, 18.9, { mode: 'swing', gap: 0.12 }); words([['story,', { hl: true }]], 96, 520, 120, t, 16.45, 18.9, { mode: 'zoom' });
+  words(['not just the title.'], 96, 640, 120, t, 16.6, 18.9, { mode: 'drift', gap: 0.1 });
+  words(['Play it ', ['back.', { hl: true }]], 96, 400, 130, t, 19.0, 22.4, { mode: 'arc', gap: 0.14, hlDelay: 0.3 });
+  words(['Every moment keeps'], 96, 540, 60, t, 19.3, 22.4, { mode: 'zoom', gap: 0.08 }); words(['your voice and its words.'], 96, 614, 60, t, 19.5, 22.4, { mode: 'zoom', gap: 0.08 });
+  const r = rig(t, 16.1, 22.4), tPlay = 19.65, on = t >= tPlay + 0.05;
+  const slide = sp(t - 16.15, 90, 16), grow = ease((t - 16.9) / 0.6), ty = lerp(844, 170, slide) * (1 - grow);
+  const scroll = ease((t - 17.1) / 2.2) * 587, pl = t >= tPlay ? { p: clamp((t - tPlay - 0.05) / 4.6) * 0.62, on } : null;
+  const layers = [{ im: FG.mm_b }, { cv: profileScreen(scroll, pl), ty, scrim: 0.3 * (1 - grow) * slide }];
+  phone3(layers, 1180, 560, 920, { t, island: true, dy: r.dy, ry: lerp(-24, 0, sp(t - 16.1, 80, 15)), rot: lerp(-3, 0, sp(t - 16.1, 90, 16)), sc: 1 + 0.07 * ease((t - 19.6) / 2.5), taps: [[tPlay, 47 / 390, (1215 - 587) / 844]] });
+  callout('Summary', 'Building battery recycling for e-bikes. Grew up in Seattle, just moved to Brooklyn.', t, 17.3, 18.8, 230);
+  callout('Play it back', 'Tap a moment. The waveform fills and the transcript lights up as it plays.', t, 20.0, 22.4, 420, 220);
+}
+function ask(t) { // 22.4 - 26.5: tap the bar, type on the iOS keyboard (key pops), send, results, draft - all the Figma frames
+  const QS = 'I want to find someone to go climbing with me', tType = 23.0, dt = 0.031, nq = clamp(Math.floor((t - tType) / dt), 0, QS.length), tSend = 24.5;
+  eyebrow('03 · Ask', 96, 230, t, 22.6, 26.5);
+  words(['Ask your'], 96, 400, 130, t, 22.65, 26.5, { mode: 'drift', gap: 0.12 }); words(['own ', ['notes.', { hl: true }]], 96, 535, 130, t, 22.9, 26.5, { mode: 'arc', gap: 0.12, hlDelay: 0.3 });
+  ['I want a climbing buddy.', "I'm in SF next month.", 'I just met a founder.'].forEach((q, i) => {
+    const t0 = 23.0 + i * 0.25, e = sp(t - t0, 170, 18), x = ease((t - 26.2) / 0.3); if (t < t0 - 0.01 || x >= 1) return;
+    const act = i === 0 && t > tSend, y = 660 + i * 92;
+    ctx.save(); ctx.translate(-(1 - e) * 700 - x * 800, 0);
+    ctx.fillStyle = act ? LIME : 'rgba(255,255,255,0.09)'; rr(96, y, 640, 70, 35); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 2; rr(96, y, 640, 70, 35); ctx.stroke();
+    ctx.fillStyle = act ? INK : '#fff'; ctx.font = `400 30px ${F}`; ctx.letterSpacing = '-0.5px'; ctx.fillText(q, 134, y + 45); ctx.restore();
+  });
+  const ovType = () => {
+    ctx.fillStyle = '#fbfbf8'; ctx.fillRect(28, 394, 306, 52); liveText(QS.slice(0, nq), 36, 414, 296, 19, false, t < tSend, t);
+    const i = nq - 1, age = t - (tType + i * dt); if (i >= 0 && nq < QS.length && age < 0.11) keyPop(QS[i], i === 0);
+  };
+  const r = rig(t, 22.1, 26.5);
+  const layers = stack(t, [[22.4, FG.find_suggest], [22.9, FG.find_query, ovType], [24.7, FG.match1], [25.5, FG.match2]], 0.5);
+  phone3(layers, 1180, 560, 920, { t, island: true, dy: r.dy, ry: lerp(26, 0, sp(t - 22.1, 80, 15)), rx: lerp(-6, 0, sp(t - 22.1, 60, 14)), rot: lerp(3, 0, sp(t - 22.1, 90, 16)), taps: [[22.7, 0.5, 0.556], [tSend, 0.862, 0.553], [25.3, 0.254, 0.545]] });
+  callout('Why Jordan', 'Mentioned in July that he climbs on Tuesdays and wants a climbing buddy.', t, 24.95, 26.3, 220, 230);
+  callout('Draft a message', 'Hi Jordan! Are you still climbing on Tuesdays? Wanna go sometime soon?', t, 25.7, 26.3, 490, 230);
+}
+function end(t) { // 26.5 - 30: sparkle -> wordmark -> Capture. Ask. Act.
+  const wmW = textWidth('Peepl', 380), e = sp(t - 26.7, 110, 12), rot = (t - 26.7) * 2.4;
+  const settle = ease((t - 27.3) / 0.5), px = lerp(960, 96 + wmW + 40, settle), py = lerp(540, 330, settle), R = lerp(150 * e, 34, settle);
+  if (t > 26.65) sparkle(px, py, Math.max(0, R), rot, LIME);
+  words(['Peepl'], 96, 470, 380, t, 27.4, 99, { mode: 'zoom', w: 300, dur: 0.8 });
+  words([['Capture.', { c: LIME }]], 96, 640, 96, t, 28.0, 99, { mode: 'arc', w: 400 });
+  words([['Ask.', { c: LIME }]], 96 + textWidth('Capture. ', 96, 400), 640, 96, t, 28.4, 99, { mode: 'drift', w: 400 });
+  words(['Act.'], 96 + textWidth('Capture. Ask. ', 96, 400), 640, 96, t, 28.8, 99, { mode: 'zoom', w: 400 });
+  words(['Remember the ', ['story.', { hl: true }]], 96, 760, 56, t, 29.2, 99, { mode: 'arc', gap: 0.09, hlDelay: 0.3 });
+  const r = sp(t - 26.9, 90, 15);
+  phone3([{ im: FG.map_in }], 1560, 700 + (1 - r) * 1150, 960, { t, island: true, ry: -18 + 12 * Math.sin(t * 0.9), rx: -4 + 3 * Math.sin(t * 0.7), rot: -4, taps: [[28.2, 0.54, 0.55]] });
+}
+const SHOTS = [[0, 2.8, hook], [2.8, 5.0, problem], [5.0, 8.6, reveal], [8.6, 14.0, capture], [14.0, 16.1, field], [16.0, 22.4, moments], [22.0, 26.5, ask], [26.5, 30, end]];
+window.seek = (t) => {
+  ctx = MAIN; background(t);
+  for (const [a, b, fn] of SHOTS) if (t >= a - 0.01 && t <= b + 0.6) {
+    const z = 1 + 0.03 * ease((t - a) / (b - a)); ctx.save(); ctx.translate(960, 540); ctx.scale(z, z); ctx.translate(-960, -540); fn(t); ctx.restore();
+  }
+};
+</script></body></html>

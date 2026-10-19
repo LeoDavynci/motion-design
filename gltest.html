@@ -1,0 +1,13 @@
+<!doctype html><html><body style="margin:0;background:#222">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+r.setSize(800, 800); document.body.appendChild(r.domElement);
+const gl = r.getContext(); window.info = { renderer: gl.getParameter(gl.RENDERER), version: gl.getParameter(gl.VERSION), samples: gl.getParameter(gl.SAMPLES) };
+const scene = new THREE.Scene(); const pm = new THREE.PMREMGenerator(r); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+const cam = new THREE.PerspectiveCamera(40, 1, 1, 5000); cam.position.z = 900;
+const m = new THREE.Mesh(new THREE.BoxGeometry(300, 300, 80), new THREE.MeshStandardMaterial({ color: 0x9b9ca2, metalness: 1, roughness: 0.3 }));
+m.rotation.set(0.4, 0.7, 0); scene.add(m); r.render(scene, cam); window.done = true;
+</script></body></html>
