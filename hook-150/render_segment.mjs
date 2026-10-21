@@ -1,4 +1,4 @@
-// node hook-150/render_segment.mjs --page <html, from the studio root> --from 2.6 --to 4.6 --out <mp4> [--fps 60 --sub 8 --speed 1]
+// node hook-150/render_segment.mjs --page <html, from the studio root, may end in ?query> --from 2.6 --to 4.6 --out <mp4> [--fps 60 --sub 8 --speed 1]
 // --speed 0.8 plays the film at 80% speed (the output is 1/0.8 as long).
 // Like render.mjs, but renders any [from, to] of a film (render.mjs always starts at 0), and captures each sub-frame as a
 // quality-100 JPEG of the page instead of a PNG of #c: with a grainy background a 1080p PNG takes ~400ms to encode, the
@@ -12,7 +12,8 @@ const PAGE = arg('page'), OUT = arg('out'), FROM = Number(arg('from', 0)), TO = 
 const FPS = Number(arg('fps', 60)), SUB = Number(arg('sub', 8)), SPEED = Number(arg('speed', 1));
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-await page.goto(pathToFileURL(process.cwd() + '/' + PAGE).href);
+const [FILE, QS] = PAGE.split('?');
+await page.goto(pathToFileURL(process.cwd() + '/' + FILE).href + (QS ? '?' + QS : ''));
 await page.evaluate(() => window.ready);
 const vf = `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`;
 const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(FPS * SUB), '-i', '-',

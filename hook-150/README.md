@@ -11,7 +11,10 @@ Lee, whose initials and profile pill pop up. The camera then pulls back: it was 
 "Speak into the mic" is typed, a waveform streams in from the right and gathers into the voice box (already part-way
 through the transcript), the camera pulls back to the phone around the box, a thumb taps send, and Jordan's new profile
 is created (skeleton card, then the profile card). It crossfades into the main film's (v17) "Every person. Every
-story." and "Remember the connection. Not just their name." (headline before the cards, crossfades instead of wipes).
+story." and "Remember the connection. Not just their name." (headline before the cards, crossfades instead of wipes),
+then a moment plays back (`moment.html`, two versions): the play button pops in and the memory card opens around it,
+or the collapsed card widens into "First meeting" and opens; a thumb taps play, the words darken and the waveform fills
+in, and at 3/4 the camera pulls back to the phone (Jordan's profile, scrolled to Moments).
 
 **Designs:** Figma file `bV6DQFxu5SHuF6hE5NIDeb`, page "Video Edits": Frames 1-3 and 16-19 (hook), 25, 22, 23, 26, 27,
 28 (Introducing Peepl), then the phone frames 427:6972 / 427:6981 and "2.6 Person profile / View details" (427:7102,
@@ -25,6 +28,7 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
   phone) are drawn once into `assets/intro/bg.png` and `assets/phone/pale.png` by `make_intro_bg.mjs` from the Figma
   shapes in `assets/intro/` and `assets/phone/` (redrawing them every frame was ~10x slower). Rerun it after changing
   the shapes.
+- `moment.html`: the moment playback (`?v=button` or `?v=card`), Figma 437:9943-10293, assets in `assets/moment/`.
 - `create.html`: "Speak into the mic" to Jordan's new profile (same contract), assets in `assets/create/`.
 - `vince_copy.py`: the edits make_cut.sh makes to temporary copies of the main film to render its shots.
 - `typing.js`: the typed lines all three use (typing, caret, re-centering, cut-zooms, exits, Vince-style highlights).
@@ -37,5 +41,5 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
 
 **Render:** `zsh hook-150/make_cut.sh` renders the hook into the main film as a quick draft (30fps, 2 sub-frames,
 ~2 min); `zsh hook-150/make_cut.sh final` renders the full-quality version (60fps, 8 sub-frames of motion blur,
-~15 min). Hook only: `cd hook-150 && node ../render.mjs --fps 60 --dur 17.6 --sub 8`. Output (`hook-150/out/peepl-film-draft.mp4`) goes to `hook-150/out/`
+~15 min). Hook only: `cd hook-150 && node ../render.mjs --fps 60 --dur 17.6 --sub 8`. Output (`hook-150/out/peepl-film-draft-button.mp4` and `-card.mp4`, one per version) goes to `hook-150/out/`
 (ignored by git). No sound yet.

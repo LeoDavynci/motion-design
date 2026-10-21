@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Peepl film: a moment plays back</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400&display=block" rel="stylesheet">
+<style>
+  /* Keyframes from Figma "Video Edits" 437:9943 (the collapsed moment), 437:9966 (unopened: "First meeting"), 437:10293
+     (opened, before it plays), 437:9978 (playing: the words darken, the waveform fills in) and 437:10037 (the phone:
+     "5.4 Person profile / Moment audio"). The big card is the phone's card at 3.5x (358 -> 1253 px wide).
+     Two versions (?v=button / ?v=card): the play button alone pops in and the card opens around it as the camera pulls
+     back; or the collapsed card widens into "First meeting", then opens. Either way: tap play, the memory plays, and at
+     3/4 the camera pulls back to the phone (dark frame as in the other phone shots).
+     Shadows: one token everywhere, 0 8px 32px rgba(22, 18, 28, 0.07) in the phone's px (0 28px 112px at 3.5x); the
+     Figma frames had three slightly different ones. */
+  :root { --ink: #16121c; --muted: #5b5361; --faint: #8d8590; --focus: #2f4fd0; --shadow: 0 8px 32px rgba(22, 18, 28, 0.07); }
+  html, body { margin: 0; background: #fff; }
+  #c { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #f4f4f4; }
+  .flat { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+  /* The background (Figma 437:99xx auras on #f4f4f4), drawn once into assets/moment/bg.png (make_intro_bg.mjs, ?bg) */
+  #bg { display: none; position: absolute; inset: 0; overflow: hidden; background: #f4f4f4; }
+  #bg img { position: absolute; display: block; }
+  .bake-bg > *:not(#bg) { display: none !important; }
+  .bake-bg #bg { display: block; }
+
+  /* The phone (as in create.html), the camera translates + scales it from its top-left */
+  #cam { position: absolute; left: 0; top: 0; width: 393px; height: 852px; transform-origin: 0 0; }
+  #device { position: absolute; left: -15.7px; top: -15.7px; right: -15.7px; bottom: -15.7px; border-radius: 70.7px;
+    background: linear-gradient(135deg, #6a6b70 0%, #2b2c30 22%, #4a4b50 48%, #222326 74%, #55565b 100%);
+    box-shadow: inset 0 0 0 0.8px rgba(255, 255, 255, 0.28), 0 0 0 0.6px rgba(0, 0, 0, 0.55),
+      0 46px 90px -16px rgba(8, 4, 14, 0.42), 0 14px 30px -10px rgba(8, 4, 14, 0.25); }
+  #device i { position: absolute; inset: 4.7px; border-radius: 66px; background: #07060a; box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.08); }
+  .btn { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #1d1e21, #5a5b60 55%, #2a2b2f); }
+  #screen { position: absolute; left: 0; top: 0; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; }
+  #glare { position: absolute; inset: 0; border-radius: 55px;
+    background: linear-gradient(118deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 28%, rgba(255, 255, 255, 0) 42%); }
+  #island { position: absolute; left: 133.5px; top: 11px; width: 126px; height: 37px; border-radius: 19px; background: #000; }
+  /* The screen's content in the Figma frame's px (390 x 844 with its 2px border, cropped): Jordan's profile scrolled
+     to Moments (the exported frame), a patch over its static card, and the live card on top */
+  #content { position: absolute; left: 0; top: 0; width: 390px; height: 844px; transform-origin: 0 0; }
+  #profile { position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; }
+  #patch { position: absolute; left: 14.5px; top: 527.5px; width: 361px; height: 203px; border-radius: 15px; background: #f9f9fa; }
+
+  /* The moment card (prototype "Moment / expanded" etc.), in the phone's px */
+  #card { position: absolute; left: 0; top: 0; }
+  #cardbg { position: absolute; inset: 0; box-sizing: border-box; border-style: solid; background: rgba(255, 255, 255, 0.8); box-shadow: var(--shadow); }
+  #cc { position: absolute; inset: 1.5px; overflow: hidden; font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif; }
+  .date { position: absolute; left: 14px; font: 400 11px/16px 'IBM Plex Mono', monospace; color: var(--muted); white-space: nowrap; }
+  .chev { position: absolute; right: 14px; width: 16px; height: 16px; }
+  .title { position: absolute; left: 14px; top: 25.5px; font-size: 14px; line-height: 18px; color: #1a1a1a; white-space: nowrap; }
+  .body { position: absolute; left: 14px; top: 40px; width: 327px; margin: 0; font-size: 15px; line-height: 1.45; color: var(--faint); }
+  .hair { position: absolute; left: 14px; top: 137px; width: 327px; height: 1px; background: rgba(22, 18, 28, 0.12); }
+  .wave { position: absolute; left: 54px; top: 154px; width: 252px; height: 20px; overflow: hidden; }
+  .wave i { position: absolute; top: 0; width: 2px; border-radius: 1px; background: #d8d8d8; }
+  .time { position: absolute; right: 14px; top: 156px; font: 400 11px/16px 'IBM Plex Mono', monospace; color: var(--muted); }
+  #play { position: absolute; left: 14px; top: 148px; width: 32px; height: 32px; border-radius: 16px; background: var(--ink); box-shadow: var(--shadow); }
+  #play svg { position: absolute; left: 10px; top: 10px; width: 12px; height: 12px; }
+
+  /* The thumb (as in the other shots) */
+  #thumb, .ripple { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; }
+  #thumb { width: 40px; height: 40px; margin: -20px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 5px 16px rgba(10, 6, 20, 0.32); }
+  .ripple { box-sizing: border-box; }
+  #r1 { border: 5px solid rgba(255, 255, 255, 0.9); }
+  #r2 { border: 2.5px solid rgba(22, 18, 28, 0.18); }
+</style>
+</head>
+<body>
+<div id="c">
+  <img class="flat" src="assets/moment/bg.png" alt="">
+  <div id="bg">
+    <img src="assets/moment/aura0.svg" style="left:-1056px;top:-889px;width:2372px;height:1950px" alt="">
+    <img src="assets/moment/aura1.svg" style="left:164px;top:56px;width:1823px;height:1760px" alt="">
+    <img src="assets/moment/aura2.svg" style="left:-837px;top:-85px;width:2153px;height:2017px" alt="">
+    <img src="assets/moment/aura3.svg" style="left:647.85px;top:-891.62px;width:2090px;height:2301px;transform:rotate(-45.76deg)" alt="">
+  </div>
+  <div id="cam">
+    <div class="btn" style="left:-19.2px;top:123.5px;height:27.3px"></div>
+    <div class="btn" style="left:-19.2px;top:183.2px;height:56.2px"></div>
+    <div class="btn" style="left:-19.2px;top:255.6px;height:56.2px"></div>
+    <div class="btn" style="right:-19.2px;top:213.0px;height:85.2px"></div>
+    <div id="device"><i></i></div>
+    <div id="screen">
+      <div id="content">
+        <img id="profile" src="assets/moment/phone-profile.png" alt="">
+        <div id="patch"></div>
+        <div id="card">
+          <div id="cardbg"></div>
+          <div id="cc">
+            <div class="date">Nov 12</div>
+            <img class="chev" src="assets/moment/chevron.svg" alt="">
+            <div class="title">First meeting</div>
+            <p class="body"></p>
+            <div class="hair"></div>
+            <div class="wave"></div>
+            <div class="time">0:34</div>
+            <div id="play">
+              <svg id="icPlay" viewBox="0 0 12 12"><path d="M3 1.4v9.2c0 .5.5.8.9.5l7.3-4.6c.4-.3.4-.8 0-1.1L3.9.9C3.5.6 3 .9 3 1.4z" fill="#fff"/></svg>
+              <svg id="icPause" viewBox="0 0 42 42"><path d="M8.75 1.75V40.25M33.25 1.75V40.25" stroke-width="7" stroke="#fff"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="island"></div>
+      <div id="glare"></div>
+    </div>
+  </div>
+  <div class="ripple" id="r1"></div>
+  <div class="ripple" id="r2"></div>
+  <div id="thumb"></div>
+</div>
+<script type="module">
+import { clamp, spring } from '../lib/motion.js';
+import { smooth, easeOut } from './typing.js';
+
+const q = new URLSearchParams(location.search);
+const V = q.get('v') === 'card' ? 'card' : 'button';
+const smoother = (x) => x * x * x * (x * (6 * x - 15) + 10);
+const lerp = (a, b, x) => a + (b - a) * x;
+const towards = (a, b, x) => a * (b / a) ** x;
+const mix = (a, b, x) => a.map((v, i) => Math.round(lerp(v, b[i], x)));
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+
+// ---- Script ----
+const POP = 0.9;                                    // the button / the collapsed card pops in, once the crossfade in is done
+const T = V === 'button'
+  ? { open: [POP + 0.55, POP + 1.75] }              // the camera pulls back from the button as the card opens around it
+  : { widen: [POP + 0.65, POP + 1.3], open: [POP + 1.95, POP + 2.75] };  // collapsed -> "First meeting" -> opened
+const TAP = T.open[1] + 0.55;                       // the thumb taps play
+const PLAY = [TAP + 0.1, 4.4];                      // the memory plays (start, length)
+const PULL = [PLAY[0] + 0.75 * PLAY[1], 1.5];       // at 3/4 the camera pulls back to the phone (start, length)
+const DURATION = Math.max(PLAY[0] + PLAY[1], PULL[0] + PULL[1]) + 1.9;
+
+// ---- Geometry (the Figma phone frame's px) ----
+// The opened card sits at (16, 529) in 437:10044, 358 x 197; it opens about its center. The screen shows the frame's
+// content (its 2px border cropped) at s = 393 / 386.
+const S = 393 / 386;
+const OPEN = { w: 358, h: 197 }, CC = { x: 195, y: 529 + 197 / 2 };          // the card's center
+const BTN = { x: 16 + 1.5 + 14 + 16, y: 529 + 1.5 + 148 + 16 };              // the play button's center
+const K_CARD = 3.5 / S;                                                        // the 3.5x card of the Figma frames
+const T1 = { x: 763.5, y: 114 };                                               // the phone in the middle of the frame
+const toScreen = (p, K, cam) => ({ x: cam.x + (p.x - 2) * S * K, y: cam.y + (p.y - 2) * S * K });
+
+// ---- Build ----
+const $ = (id) => document.getElementById(id);
+const card = $('card'), cardbg = $('cardbg'), cc = $('cc'), cam = $('cam'), content = $('content');
+const date = cc.querySelector('.date'), chev = cc.querySelector('.chev'), title = cc.querySelector('.title');
+const body = cc.querySelector('.body'), hair = cc.querySelector('.hair'), waveEl = cc.querySelector('.wave'), time = cc.querySelector('.time');
+const play = $('play'), icPlay = $('icPlay'), icPause = $('icPause'), thumb = $('thumb'), r1 = $('r1'), r2 = $('r2');
+const phoneBits = ['device', 'profile', 'patch', 'island', 'glare'].map($).concat([...document.querySelectorAll('.btn')]);
+content.style.transform = `translate(${-2 * S}px, ${-2 * S}px) scale(${S})`;
+const NOTE = 'Came across Jordan on my way home and he said how much he hates his job search and that the job market is cooked. He hates his current job and wants out'.split(' ');
+const words = NOTE.map((w, i) => { const s = document.createElement('span'); s.textContent = w; body.append(s); if (i < NOTE.length - 1) body.append(' '); return s; });
+// The waveform (Figma: 40 bars, 2 wide every 5): played bars take the gradient from focus blue to orange, the rest grey
+const HEIGHTS = [6, 12, 18, 10, 14, 20, 8, 16, 12, 6, 10, 18, 14, 8, 20, 12, 6, 14, 10, 16, 8, 12, 18, 10, 6, 14, 20, 12, 8, 16, 10, 6, 12, 18, 14, 8, 10, 16, 12, 6];
+const BLUE = hex('#2f4fd0'), ORANGE = hex('#ec5a32'), GREY = hex('#d8d8d8');
+const bars = HEIGHTS.map((h, i) => { const el = document.createElement('i'); Object.assign(el.style, { left: `${i * 5}px`, height: `${h}px`, top: `${10 - h / 2}px` }); waveEl.appendChild(el); return el; });
+const INK = hex('#16121c'), FAINT = hex('#8d8590');
+
+// ---- Paint frame t ----
+window.seek = (t) => {
+  // The card's shape: collapsed (46 x 60) -> unopened (358 x 60) -> opened (358 x 197), about its center
+  const pop = spring(t - POP, 180, 14);
+  const widen = V === 'card' ? smoother(clamp((t - T.widen[0]) / (T.widen[1] - T.widen[0]))) : 1;
+  const open = smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0])));
+  const w = V === 'card' ? lerp(46, OPEN.w, widen) : OPEN.w, h = V === 'card' ? lerp(60, OPEN.h, open) : OPEN.h;
+  Object.assign(card.style, { left: `${CC.x - w / 2}px`, top: `${CC.y - h / 2}px`, width: `${w}px`, height: `${h}px` });
+  const radius = V === 'card' ? lerp(16, 14, open) : 14;
+  Object.assign(cardbg.style, { borderRadius: `${radius}px`, borderWidth: `${V === 'card' ? lerp(1, 1.5, open) : 1.5}px`,
+    borderColor: V === 'card' ? `rgba(${mix([255, 255, 255], BLUE, open).join(',')}, ${lerp(0.7, 1, open).toFixed(3)})` : 'var(--focus)' });
+  cc.style.borderRadius = `${Math.max(0, radius - 1.5)}px`;
+
+  // The camera. Version button: it starts close on the button and pulls back as the card opens around it. Then (both)
+  // it holds the 3.5x card in the middle until 3/4 of the playback, then pulls back to the phone.
+  const e = smoother(clamp((t - PULL[0]) / PULL[1]));
+  const near = V === 'button' ? 1 - smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0]))) : 0;
+  let K = K_CARD * (1 + 1.6 * near);
+  // where the card's center is on screen: the button's center is in the middle while close in, the card's after
+  let cx = 960 + (CC.x - BTN.x) * S * K * near, cy = 540 + (CC.y - BTN.y) * S * K * near;
+  K = towards(K, 1, e);
+  const fin = toScreen(CC, 1, T1);
+  cx = lerp(cx, fin.x, e); cy = lerp(cy, fin.y, e);
+  const camT = { x: cx - (CC.x - 2) * S * K, y: cy - (CC.y - 2) * S * K };
+  cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${camT.y.toFixed(3)}px) scale(${K.toFixed(5)})`;
+  const phone = smooth(clamp((e - 0.08) / 0.55)).toFixed(3);
+  phoneBits.forEach((el) => { el.style.opacity = phone; });
+
+  // What the card shows. Version card: it pops in collapsed, widens ("Nov 12 / First meeting" come in), then opens (the
+  // chevron flips up, the title goes, the memory and its audio come in). Version button: the button pops in alone,
+  // the card's body opens out from it as the camera pulls back.
+  const show = (el, a, dy = 0) => { el.style.opacity = a.toFixed(3); el.style.transform = dy ? `translateY(${dy.toFixed(2)}px)` : ''; };
+  const inner = smooth(clamp((open - 0.35) / 0.65));
+  if (V === 'card') {
+    card.style.opacity = clamp((t - POP) / 0.12).toFixed(3);
+    card.style.transform = `scale(${(0.7 + 0.3 * pop).toFixed(4)})`;
+    const label = smooth(clamp((widen - 0.55) / 0.45));
+    date.style.top = `${lerp(9.9, 14, open)}px`;
+    show(date, label);
+    show(title, label * (1 - smooth(clamp(open / 0.4))));
+    chev.style.top = `${lerp(20, 14, open)}px`;
+    chev.style.transform = `rotate(${lerp(90, -90, open).toFixed(2)}deg)`;
+    cardbg.style.opacity = '1'; cardbg.style.clipPath = '';
+    [body, hair, waveEl, time].forEach((el, i) => show(el, smooth(clamp(inner * 1.4 - i * 0.12)), 8 * (1 - inner)));
+    show(play, smooth(clamp(inner * 1.4 - 0.2)), 8 * (1 - inner));
+  } else {
+    card.style.opacity = '1'; card.style.transform = '';
+    // The card's body grows out from the button: a circle around the button that opens to the whole card
+    const reach = smoother(clamp((t - T.open[0] + 0.1) / (T.open[1] - T.open[0])));
+    const R = lerp(16, 420, reach), bx = BTN.x - (CC.x - w / 2), by = BTN.y - (CC.y - h / 2);
+    cardbg.style.clipPath = reach >= 1 ? '' : `circle(${R.toFixed(2)}px at ${bx}px ${by}px)`;
+    cardbg.style.opacity = smooth(clamp(reach / 0.3)).toFixed(3);
+    cc.style.clipPath = reach >= 1 ? '' : `circle(${(R - 1.5).toFixed(2)}px at ${bx - 1.5}px ${by - 1.5}px)`;
+    date.style.top = '14px'; chev.style.top = '14px'; chev.style.transform = 'rotate(-90deg)';
+    show(title, 0);
+    [hair, waveEl, time, body, date].forEach((el, i) => show(el, smooth(clamp(reach * 1.5 - 0.2 - i * 0.08))));
+    chev.style.opacity = smooth(clamp(reach * 1.5 - 0.6)).toFixed(3);
+    // The button pops in (spring, slight overshoot) with its icon turning into place
+    play.style.opacity = clamp((t - POP) / 0.1).toFixed(3);
+    play.style.transform = `scale(${pop.toFixed(4)})`;
+    icPlay.style.transform = `rotate(${(-120 * (1 - pop)).toFixed(2)}deg)`;
+  }
+
+  // Tap play: the thumb glides in and presses it, the icon turns to pause; the memory plays: each word darkens as it is
+  // spoken and the waveform fills in with its gradient
+  const u = t - TAP, press = clamp(u / 0.1) * (1 - clamp((u - 0.22) / 0.22));
+  const bScr = toScreen(BTN, K, camT);
+  const gl = easeOut(clamp((u + 0.9) / 0.9)), fade = 1 - clamp((u - 0.12) / 0.2);
+  thumb.style.opacity = u > -0.9 && u < 0.4 ? fade.toFixed(3) : '0';
+  thumb.style.transform = `translate(${(bScr.x + (1 - gl) * 170).toFixed(1)}px, ${(bScr.y + (1 - gl) * 200).toFixed(1)}px) scale(${(1 - 0.2 * press).toFixed(3)})`;
+  const ring = easeOut(clamp(u / 0.4));
+  [[r1, 30], [r2, 33]].forEach(([el, base]) => {
+    const R = base + 70 * ring;
+    Object.assign(el.style, { width: `${2 * R}px`, height: `${2 * R}px`, opacity: u >= 0 && u < 0.4 ? (1 - ring).toFixed(3) : '0',
+      transform: `translate(${(bScr.x - R).toFixed(1)}px, ${(bScr.y - R).toFixed(1)}px)` });
+  });
+  if (V === 'card' || t >= POP + 0.5) play.style.transform = `scale(${(1 - 0.1 * press).toFixed(3)})`;
+  const playing = t >= PLAY[0] && t < PLAY[0] + PLAY[1];   // back to play once it has finished ("Playback complete")
+  icPlay.style.display = playing ? 'none' : ''; icPause.style.display = playing ? '' : 'none';
+  const p = clamp((t - PLAY[0]) / PLAY[1]);
+  words.forEach((s, i) => { s.style.color = `rgb(${mix(FAINT, INK, clamp(p * NOTE.length - i)).join(',')})`; });
+  bars.forEach((el, i) => {
+    const a = clamp(p * bars.length - i);
+    el.style.background = `rgb(${mix(GREY, mix(BLUE, ORANGE, i / (bars.length - 1)), a).join(',')})`;
+  });
+};
+window.DURATION = DURATION;
+
+if (q.has('bg')) $('c').classList.add('bake-bg');
+window.ready = (async () => {
+  await document.fonts.load("400 15px 'IBM Plex Sans'");
+  await document.fonts.load("400 11px 'IBM Plex Mono'");
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((im) => im.decode().catch(() => {})));
+  window.seek(0);
+})();
+if (q.has('play')) {
+  window.ready.then(() => {
+    const t0 = performance.now();
+    const loop = (now) => { window.seek(((now - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>
