@@ -8,9 +8,10 @@ and a white grid fills the screen. The text slides off, the dots fade out from t
 main film's "Meeting people is easy" shot (2.8s in `../index.html`), which wipes into "Introducing Peepl" on a light
 background: the discs from the prototype's mindmap slide in, gather into a cluster, and the camera zooms into Jordan
 Lee, whose initials and profile pill pop up. The camera then pulls back: it was the screen of a phone all along (a dark iPhone, like the one in the main film), seen whole on a pale background. A thumb taps Jordan's pill, and his profile slides up; then the phone fades away.
-"Speak into the mic" is typed, a waveform slides in from the right and gathers into the voice box (already part-way
+"Speak into the mic" is typed, a waveform streams in from the right and gathers into the voice box (already part-way
 through the transcript), the camera pulls back to the phone around the box, a thumb taps send, and Jordan's new profile
-is created (skeleton card, then the profile card).
+is created (skeleton card, then the profile card). It crossfades into the main film's (v17) "Every person. Every
+story." and "Remember the connection. Not just their name." (headline before the cards, crossfades instead of wipes).
 
 **Designs:** Figma file `bV6DQFxu5SHuF6hE5NIDeb`, page "Video Edits": Frames 1-3 and 16-19 (hook), 25, 22, 23, 26, 27,
 28 (Introducing Peepl), then the phone frames 427:6972 / 427:6981 and "2.6 Person profile / View details" (427:7102,
@@ -25,6 +26,7 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
   shapes in `assets/intro/` and `assets/phone/` (redrawing them every frame was ~10x slower). Rerun it after changing
   the shapes.
 - `create.html`: "Speak into the mic" to Jordan's new profile (same contract), assets in `assets/create/`.
+- `vince_copy.py`: the edits make_cut.sh makes to temporary copies of the main film to render its shots.
 - `typing.js`: the typed lines all three use (typing, caret, re-centering, cut-zooms, exits, Vince-style highlights).
 - `dots.js`: the colorful grid's dot positions and colors, from Figma Frame 17.
 - `assets/bg.png`: the background image from the Figma frames (grain included).

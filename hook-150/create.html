@@ -152,8 +152,8 @@ import { makeLines, smooth, easeOut } from './typing.js';
 // ---- Script ----
 // 1. The phone has faded away (end of intro.html): the pale background alone for a beat
 // 2. "Speak into the mic" is typed, like the earlier lines (430:7800)
-// 3. A waveform slides in from the right until it runs the whole width under the text, its bars moving like the
-//    prototype's live waveform (430:8025)
+// 3. A waveform streams in from the right at a steady pace, like a recording app's, until it runs the whole width
+//    under the text, its bars moving like the prototype's live waveform (430:8025)
 // 4. The text slides off; the waveform gathers into the voice box's waveform as the box opens up around it (430:8217).
 //    The box is already part-way through the transcript, which keeps typing until it's complete
 // 5. The box shrinks into its place at the bottom of the phone's screen as the camera pulls back and the phone's screen
@@ -161,11 +161,12 @@ import { makeLines, smooth, easeOut } from './typing.js';
 // 6. A thumb taps send: the transcript moves to the top, "Creating a new profile for Jordan Lee...", a skeleton card,
 //    then Jordan's new profile card (prototype 2.3 / 2.4 / 2.5, as in Vince's film)
 const SPEAK = { start: 0.5, every: 0.06 };     // "Speak into the mic": 18 keys
-const WAVE_IN = [1.75, 1.9];                   // the waveform slides in from the right, unhurried (start, length)
-const MORPH = [4.15, 5.15];                    // the waveform gathers into the box's; the box opens up
+const WAVE = { start: 1.75, speed: 800 };      // the waveform streams in from the right at a constant pace (px/s), like a
+                                               // recording app's, and fills the width after ~2.5s
+const MORPH = [4.6, 6.1];                      // its scroll slows to a stop as it gathers into the box's; the box opens up
 const TEXT_OUT = MORPH[0] - 0.25;              // the line slides off
 const NOTE = 'Jordan Lee, met at Demo Day. Founder at Peepl, battery recycling for e-bikes. From Seattle, lives in Brooklyn now. Climbs Tuesdays. Owe them a hardware engineer intro.'.split(' ');
-const SAY = { start: 3.35, every: 0.13 };      // the transcript, word by word: about half typed once the box is open
+const SAY = { start: MORPH[0] - 0.8, every: 0.13 };      // the transcript, word by word: about half typed once the box is open
 const SAID = SAY.start + (NOTE.length - 1) * SAY.every;
 const PULL = [SAID + 0.55, SAID + 1.95];       // the camera pulls back to the whole phone
 const TAP = PULL[1] + 0.75;                    // the thumb taps send
@@ -173,6 +174,8 @@ const SENT = TAP + 0.12;
 const NOTE_IN = SENT + 0.2, MAKING_IN = SENT + 0.6;
 const SKEL = SENT + 1.25, MADE = SKEL + 1.35;
 const DURATION = MADE + 2.3;
+
+const smoother = (x) => x * x * x * (x * (6 * x - 15) + 10);
 
 // ---- Typing ----
 const LINES = [{
@@ -200,12 +203,21 @@ const live = (i, t) => {
   const h = (k) => 3 + hash(i * 97.3 + k * 13.37) * 18 * (0.45 + 0.55 * Math.abs(Math.sin(i / 3 + k * 0.385)));
   return lerp(h(k), h(k + 1), f);
 };
-// Across the screen (430:8025): bars 8 wide every 24px from x = -36, centered on y = 788, 4x the prototype's heights
-const FULL = Array.from({ length: 84 }, (_, j) => ({ x: -32 + 24 * j }));
+// Across the screen (430:8025): bars 8 wide every 24px, centered on y = 788, 4x the prototype's heights. A stream: a new
+// bar appears at the right edge every 24px of scroll and the whole wave moves left at a constant speed. From MORPH[0]
+// no new bars come and the scroll slows evenly to a stop over the morph (scroll time te).
+const DT = 24 / WAVE.speed, X_IN = 1932, MD = MORPH[1] - MORPH[0];
+const scrollT = (t) => { if (t < MORPH[0]) return t; const u = clamp((t - MORPH[0]) / MD); return MORPH[0] + MD * (u - u * u / 2); };
+const TE_END = MORPH[0] + MD / 2;
+const N = Math.floor((MORPH[0] - WAVE.start) / DT) + 1;
+const streamX = (k, te) => X_IN - WAVE.speed * (te - WAVE.start - k * DT);
 const waveEl = document.getElementById('wave');
-FULL.forEach((b) => { b.el = document.createElement('i'); waveEl.appendChild(b.el); });
-// In the box: 30 bars, 2 wide every 6, centered in the wave's 236px (box x 39 + 6i, row center y 127)
-const BARS = 30, J0 = 19;   // the full-width bars J0..J0+29 become the box's bars
+const FULL = Array.from({ length: N }, (_, k) => { const el = document.createElement('i'); waveEl.appendChild(el); return { k, el }; });
+// In the box: 30 bars, 2 wide every 6, centered in the wave's 236px (box x 39 + 6i, row center y 127). They are the 30
+// stream bars that come to rest in the middle (around x 773, the box wave's center), so each keeps its own motion.
+const BARS = 30;
+const K_MID = (773 - X_IN + WAVE.speed * (TE_END - WAVE.start)) / (WAVE.speed * DT);
+const K_FIRST = Math.round(K_MID - (BARS - 1) / 2);
 const bwave = document.getElementById('bwave');
 const boxBars = Array.from({ length: BARS }, (_, i) => { const el = document.createElement('i'); el.style.left = `${30 + 6 * i}px`; bwave.appendChild(el); return el; });
 // Where a box bar is in the frame while the camera is at K0
@@ -227,31 +239,34 @@ const phoneBits = ['device', 'screenbg', 'island', 'glare', 'close', 'ask'].map(
 window.seek = (t) => {
   paint(t);
 
-  // The waveform slides in from the right, then (MORPH) gathers into the box's waveform: the middle 30 bars move onto
-  // the box's bars, the rest fold into its ends and fade
-  const win = easeOut(clamp((t - WAVE_IN[0]) / WAVE_IN[1]));
-  const m = smooth(clamp((t - MORPH[0]) / (MORPH[1] - MORPH[0])));
-  waveEl.style.display = t < WAVE_IN[0] || m >= 1 ? 'none' : '';
-  FULL.forEach((b, j) => {
-    const i = clamp(j - J0, 0, BARS - 1), inBox = j - J0 === i, to = boxBarAt(i);
-    const x = lerp(b.x + (1 - win) * 2000, to.x, m), y = lerp(788, to.y, m);
-    const h = lerp(4 * live(j, t), inBox ? K0 * live(J0 + i, t) : 0, m), w = lerp(8, 2 * K0, m);
-    Object.assign(b.el.style, { width: `${w.toFixed(2)}px`, height: `${h.toFixed(2)}px`, borderRadius: `${(w / 2).toFixed(2)}px`,
-      transform: `translate(${(x - w / 2).toFixed(2)}px, ${(y - h / 2).toFixed(2)}px)`,
-      opacity: inBox ? '1' : (1 - smooth(clamp(m / 0.7))).toFixed(3) });
+  // The waveform streams in from the right, then (MORPH) slows to a stop and gathers into the box's waveform: the 30
+  // bars resting in the middle glide onto the box's bars, the others fold in and fade (the farthest first)
+  const te = scrollT(t), m = smoother(clamp((t - MORPH[0]) / MD));
+  waveEl.style.display = t < WAVE.start || m >= 1 ? 'none' : '';
+  FULL.forEach(({ k, el }) => {
+    const born = te - WAVE.start - k * DT;
+    if (born < 0) { el.style.opacity = '0'; return; }
+    const i = clamp(k - K_FIRST, 0, BARS - 1), inBox = k - K_FIRST === i, to = boxBarAt(i), d = Math.abs(k - K_FIRST - i);
+    const grow = smooth(clamp(born / 0.1));                       // a new bar rises in at the right edge
+    const x = lerp(streamX(k, te), to.x, m), y = lerp(788, to.y, m);
+    const h = grow * lerp(4 * live(k, t), inBox ? K0 * live(k, t) : 0, m), w = lerp(8, 2 * K0, m);
+    const fade = inBox ? 1 : 1 - smooth(clamp(m / (0.3 + 0.45 * (1 - Math.min(d, 30) / 30))));
+    Object.assign(el.style, { width: `${w.toFixed(2)}px`, height: `${h.toFixed(2)}px`, borderRadius: `${(w / 2).toFixed(2)}px`,
+      transform: `translate(${(x - w / 2).toFixed(2)}px, ${(y - h / 2).toFixed(2)}px)`, opacity: fade.toFixed(3) });
   });
   boxBars.forEach((el, i) => {
-    const h = live(J0 + i, t);
+    const h = live(K_FIRST + i, t);
     el.style.height = `${h.toFixed(2)}px`;
     el.style.transform = `translateY(${(22 - h / 2).toFixed(2)}px)`;
   });
   bwave.style.opacity = m >= 1 ? '1' : '0';
 
-  // The box opens up from its waveform: a clip that grows from around the bars to the whole box, fading in
-  const open = smooth(clamp((m - 0.1) / 0.9));
+  // The box opens up around its waveform once the bars are mostly in place: a clip that grows from around the bars to
+  // the whole box, fading in
+  const open = smooth(clamp((m - 0.3) / 0.7));
   const ins = [lerp(105, 0, open), lerp(137, 0, open), lerp(9, 0, open), lerp(33, 0, open)];
   box.style.clipPath = `inset(${ins.map((v) => v.toFixed(2) + 'px').join(' ')} round ${lerp(22, 31, open).toFixed(2)}px)`;
-  box.style.opacity = t < MORPH[0] ? '0' : smooth(clamp((m - 0.05) / 0.5)).toFixed(3);
+  box.style.opacity = t < MORPH[0] ? '0' : smooth(clamp((m - 0.2) / 0.5)).toFixed(3);
 
   // The transcript types in word by word (each fades and sharpens in), the caret after the last word
   let n = 0;

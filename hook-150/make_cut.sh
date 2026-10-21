@@ -9,6 +9,10 @@
 #   3. "Introducing Peepl" (intro.html), on the light background, brought in by a 0.6s soft wipe from the left, like the
 #      wipes Vince's film uses between its night and day scenes. It ends on the pale background once the phone fades.
 #   4. "Speak into the mic" and the new profile (create.html), which starts on the same pale background (0.3s crossfade).
+#   5. Vince's "Every person. Every story." and "Remember the connection. Not just their name." (his v17 film, from a
+#      temporary copy: headline before the cards, crossfades instead of his wipes, see vince_copy.py), brought in by a
+#      0.8s crossfade from the new profile, ending on "Not just their name." held for a beat.
+# The "Meeting people is easy" shot stays the one from his first version (commit 964dee0), which this cut was timed on.
 # Run from anywhere:  zsh ~/motion-design/hook-150/make_cut.sh [draft|final]
 #   draft (default): 30fps, 2 sub-frames of motion blur. For checking timing while iterating.
 #   final: 60fps, 8 sub-frames. For versions to share.
@@ -35,11 +39,7 @@ node hook-150/render_segment.mjs --page hook-150/index.html --from 0 --to "$HOOK
 
 # Vince's film with only the problem shot, on its night background (his file is not changed)
 TMP=.cut-problem.tmp.html
-sed -e 's/^const SHOTS = .*/const SHOTS = [[2.8, 5.35, problem]];/' -e "s/\[4.6, 'dA', 'diag'\], //" \
-  -e "/words(\['Remembering'\]/s/, 4\.7, { mode: 'zoom'/, 5.05, { mode: 'zoom'/g" -e 's/(t - 4\.7 - i \* 0\.06)/(t - 5.05 - i * 0.06)/' index.html > "$TMP"
-grep -q '^const SHOTS = \[\[2.8, 5.35, problem\]\];' "$TMP" && ! grep -q "\[4.6, 'dA'" "$TMP" && [ "$(grep -c "5.05, { mode: 'zoom'" "$TMP")" = 1 ] \
-  && [ "$(grep -o "5.05, { mode: 'zoom'" "$TMP" | wc -l | tr -d ' ')" = 2 ] && grep -q '(t - 5.05 - i \* 0.06)' "$TMP" \
-  || { echo "could not isolate the problem shot"; rm -f "$TMP"; exit 1; }
+git show 964dee0:index.html | python3 hook-150/vince_copy.py problem > "$TMP" || { rm -f "$TMP"; exit 1; }
 VINCE_SPEED=0.65  # Vince's shot plays at 65% speed (user's call: it read too fast)
 VFROM=2.4; VTO=5.85
 node hook-150/render_segment.mjs --page "$TMP" --from "$VFROM" --to "$VTO" --speed "$VINCE_SPEED" --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
@@ -47,12 +47,24 @@ rm -f "$TMP"
 node hook-150/render_segment.mjs --page hook-150/intro.html --from 0 --to "$INTRO_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/intro.mp4
 node hook-150/render_segment.mjs --page hook-150/create.html --from 0 --to "$CREATE_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/create.mp4
 
-FADE=0.4; WIPE=0.6; PALE=0.3; VINCE=$(node -e "console.log(((${VTO} - ${VFROM}) / ${VINCE_SPEED}).toFixed(3))")
+# Vince's v17 "Every person" + "Remember the connection" (his file is not changed): from just before the field shot (his
+# night background alone) to just before his phone comes up under "Not just their name."
+TMP=.cut-story.tmp.html
+python3 hook-150/vince_copy.py story < index.html > "$TMP" || { rm -f "$TMP"; exit 1; }
+RANGE=$(node -e "import('playwright').then(async({chromium})=>{const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await b.newPage();await p.goto('file://'+process.cwd()+'/$TMP');await p.evaluate(()=>window.ready);console.log(await p.evaluate(()=>[window.filmTime(window.BGT.field)-0.9,window.filmTime(window.BGT.moments+2.45)].map((x)=>x.toFixed(3)).join(' ')));await b.close()})")
+SFROM=${RANGE% *}; STO=${RANGE#* }
+node hook-150/render_segment.mjs --page "$TMP" --from "$SFROM" --to "$STO" --fps "$FPS" --sub "$SUB" --out hook-150/out/story-raw.mp4
+rm -f "$TMP"
+HOLD=0.8   # "Not just their name." holds a beat at the end
+ffmpeg -y -loglevel error -i hook-150/out/story-raw.mp4 -vf "tpad=stop_mode=clone:stop_duration=${HOLD}" -c:v libx264 -crf 16 -pix_fmt yuv420p hook-150/out/story.mp4
+
+FADE=0.4; WIPE=0.6; PALE=0.3; STORY=0.8; VINCE=$(node -e "console.log(((${VTO} - ${VFROM}) / ${VINCE_SPEED}).toFixed(3))")
 O1=$(node -e "console.log((${HOOK_DUR} - ${FADE}).toFixed(3))")
 O2=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE}).toFixed(3))")
 O3=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE} + ${INTRO_DUR} - ${PALE}).toFixed(3))")
-ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 \
-  -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3},format=yuv420p[v]" \
+O4=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE} + ${INTRO_DUR} - ${PALE} + ${CREATE_DUR} - ${STORY}).toFixed(3))")
+ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 \
+  -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4},format=yuv420p[v]" \
   -map "[v]" -c:v libx264 -crf 16 -r "$FPS" hook-150/out/peepl-film-draft.mp4
 cp hook-150/out/silent.mp4 hook-150/out/peepl-hook-150.mp4
 echo done
