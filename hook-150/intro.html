@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Peepl film: Introducing Peepl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  /* Keyframes from Figma "Video Edits" Frames 25, 22, 23, 26, 27, 28. Light background: four big blurred color shapes
+     (blur 300) on #f5f5f5 with Texture/Grain dark, the frame at 85% opacity; the same in every frame of the section.
+     Text: Geist Regular 100px, ink #16121c, "Peepl" lime. Discs: the prototype's mindmap discs (white 50%, layer 60%,
+     soft white inner glow), a white center dot with a small shadow, dashed white links. */
+  :root { --ink: #16121c; --lime: #beff00; --caret: rgba(22, 18, 28, 0.45); --muted: #5b5361; }
+  html, body { margin: 0; background: #fff; }
+  #c { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #fff; }
+  /* The background is drawn once from the Figma shapes (open intro.html?bg, or run make_intro_bg.mjs) and saved as
+     assets/intro/bg.png: redrawing four blur-300 shapes every frame made each frame ~10x slower to capture. */
+  #bgflat { position: absolute; inset: 0; width: 1920px; height: 1080px; display: block; }
+  #bg { display: none; position: absolute; inset: 0; overflow: hidden; background: #f5f5f5; opacity: 0.85; }
+  .bg-only #bg { display: block; }
+  .bg-only #bgflat, .bg-only #world, .bg-only #text, .bg-only #pill { display: none; }
+  #bg img { position: absolute; display: block; }
+  /* Figma Texture/Grain dark: fine fractal noise, the band between 12% and 38% luminance drawn in night at 22% */
+  #bg::after { content: ''; position: absolute; inset: 0; background-size: 200px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' seed='0' stitchTiles='stitch'/><feColorMatrix type='luminanceToAlpha'/><feComponentTransfer result='speck'><feFuncA type='discrete' tableValues='0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'/></feComponentTransfer><feFlood flood-color='rgb(22,18,28)' flood-opacity='0.22'/><feComposite operator='in' in2='speck'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>"); }
+  #world { position: absolute; inset: 0; transform-origin: 0 0; }
+  #links { position: absolute; inset: 0; overflow: visible; }
+  #links line { stroke: rgba(255, 255, 255, 0.9); stroke-width: 1.5; stroke-dasharray: 2 2.6; stroke-linecap: round; }
+  .disc { position: absolute; left: 0; top: 0; }
+  /* The prototype's disc (Figma "Translucent outer orb"): white 50%, layer 60%, white inner shadow (erode 4, blur 5) */
+  .disc i { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.5); opacity: 0.6;
+    box-shadow: inset 0 0 10px 4px #fff; transform: translate(-50%, -50%); }
+  /* The white center dot with its small drop shadow (Figma "Centered dot") */
+  .disc b { position: absolute; border-radius: 50%; background: #fff; transform: translate(-50%, -50%);
+    box-shadow: 0 1px 4px rgba(23, 18, 28, 0.18); display: grid; place-items: center; }
+  /* Initials (Figma Frame 27): Geist SemiBold, black at 40%, inside the dot */
+  .disc b em { font: 600 16.8px/1 'Geist', 'Helvetica Neue', Arial, sans-serif; font-style: normal; color: rgba(0, 0, 0, 0.4); }
+  #text { position: absolute; inset: 0; }
+  .line { position: absolute; left: 0; top: 0; white-space: pre; transform-origin: 0 0;
+    font: 400 100px/0.9 'Geist', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -0.04em; color: var(--ink); }
+  .line span { white-space: pre; }
+  .line .lime { color: var(--lime); }
+  .caret { position: absolute; top: -0.06em; width: 0.025em; height: 1.02em; background: var(--caret); }
+  /* Maya Chen's pill: the prototype's "Profile" / map pill at 2.1x, as in Figma Frame 28 */
+  #pill { position: absolute; left: 734px; top: 612px; width: 472.5px; box-sizing: border-box; display: flex;
+    align-items: center; gap: 25.2px; padding: 16.8px 33.6px; border-radius: 999px; background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 2.1px rgba(17, 17, 19, 0.03), 0 12.6px 42px -25.2px rgba(60, 50, 110, 0.18);
+    font-family: 'Geist', 'Helvetica Neue', Arial, sans-serif; opacity: 0; transform-origin: 50% 0; }
+  #pill .avatar { position: relative; flex: none; width: 75.6px; height: 75.6px; box-sizing: border-box; border-radius: 50%;
+    border: 4.2px solid #fff; overflow: hidden;
+    background: radial-gradient(circle, #1b2c86 0%, #253eab 27.5%, #2f4fd0 55%, #8e5581 77.5%, #ec5a32 100%); }
+  #pill .avatar img { position: absolute; left: 50%; top: 50%; width: 197.4px; height: 197.4px; transform: translate(-50%, -50%); }
+  #pill .who { flex: 1; min-width: 0; }
+  #pill .name { font-weight: 500; font-size: 29.4px; line-height: 1.3; letter-spacing: -1.176px; color: var(--ink); }
+  #pill .role { font-weight: 400; font-size: 25.2px; line-height: 33.6px; color: var(--muted); }
+  #pill .chev { flex: none; width: 39.9px; height: 39.9px; }
+</style>
+</head>
+<body>
+<div id="c">
+  <img id="bgflat" src="assets/intro/bg.png" alt="">
+  <div id="bg">
+    <img src="assets/intro/bg0.svg" style="left:-901px;top:-875px;width:2316px;height:1972px" alt="">
+    <img src="assets/intro/bg1.svg" style="left:-873px;top:-239px;width:2703px;height:2343px" alt="">
+    <img src="assets/intro/bg2.svg" style="left:360px;top:-875px;width:2065px;height:1931px" alt="">
+    <img src="assets/intro/bg3.svg" style="left:456.7px;top:49.3px;width:2247.03px;height:1911.98px;transform:rotate(-25.77deg)" alt="">
+  </div>
+  <div id="world"><svg id="links" width="1920" height="1080"></svg></div>
+  <div id="text"></div>
+  <div id="pill">
+    <div class="avatar"><img src="assets/intro/maya.jpg" alt=""></div>
+    <div class="who"><div class="name">Maya Chen</div><div class="role">Product Designer</div></div>
+    <img class="chev" src="assets/intro/chevron.svg" alt="">
+  </div>
+</div>
+<script type="module">
+import { clamp, spring } from '../lib/motion.js';
+import { makeLines, cutAfter, snapEase, smooth, easeOut } from './typing.js';
+
+// ---- Script ----
+// 1. "Introducing " typed at 100px (Frame 25) -> a cut-zoom between keystrokes, typing carrying straight on, to 200px:
+//    "Peepl" in lime (Frame 22)
+// 2. The discs fade and slide in from all around and drift a little (Frame 23)
+// 3. The text slides off to the left while fading; the discs gather into a cluster in the middle, linked (Frame 26)
+// 4. Zoom into the middle disc, Maya Chen (2x, Frame 27); close enough, her initials pop up in her dot
+// 5. Her profile pill pops up underneath (Frame 28)
+const INTRO = { start: 0.5, every: 0.065 };
+const { zoom: CUT, next: PEEPL_AT } = cutAfter(INTRO.start + 11 * INTRO.every, INTRO.every); // "Introducing " = 12 keys
+const DISCS_IN = [2.0, 0.6];          // start, stagger spread (s)
+const TEXT_OUT = 3.9;                 // the line slides off
+const GATHER = [4.45, 0.3];           // the discs gather: start, stagger spread
+const LINKS_IN = [5.25, 0.5];
+const ZOOM = [6.2, 7.3];              // into Maya Chen, 2x
+const INITIALS_AT = 7.0;
+const PILL_AT = 7.45;
+const DURATION = 9.4;
+
+const LINES = [{
+  parts: [
+    { text: 'Introducing ', start: INTRO.start, every: INTRO.every },
+    { text: 'Peepl', start: PEEPL_AT, every: 0.07, lime: true },
+  ],
+  caretFrom: 0.25, clearAt: TEXT_OUT, slideOut: true,
+  scale: (t) => 1 + snapEase(clamp((t - CUT[0]) / (CUT[1] - CUT[0]))),
+  beats: [CUT], zoomTo: { k: 2, left: -261 },   // Frame 22: "Introducing Peepl" at 200px, left edge at -261px
+}];
+const { measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
+
+// ---- Discs ----
+// The gathered cluster, from Figma Frame 26: center x, y, disc size, dot size. MAYA is the middle one (the "MC" disc in
+// Frames 27-28). The last six are extra, around the edge, to keep it as full as the earlier frames.
+const CLUSTER = [
+  [928.1, 854.0, 86, 16], [907.4, 744.2, 135, 21], [794.8, 774.4, 135, 21], [870.6, 312.9, 135, 22],
+  [1196.2, 909.6, 135, 21], [1122.8, 811.4, 136, 21], [918.4, 632.9, 193, 28], [512.7, 537.5, 160, 24.7],
+  [1220.3, 784.1, 86, 17], [967.8, 532.6, 193, 34.8], [462.5, 412.9, 101, 18.9], [854.4, 510.7, 193, 28],
+  [1074.9, 521.6, 193, 29], [1213.6, 509.1, 135, 22], [1143.7, 617.0, 86, 16], [1367.1, 404.1, 86, 16],
+  [1118.4, 215.4, 135, 22], [1452.3, 704.3, 116.6, 18.6], [1551.7, 679.0, 74.3, 13.8],
+  [640, 300, 110, 18], [690, 905, 120, 19], [1330, 240, 100, 17], [1390, 880, 110, 18], [350, 640, 90, 16], [1620, 470, 95, 16],
+];
+const MAYA = 9;
+const C = { x: CLUSTER[MAYA][0], y: CLUSTER[MAYA][1] };   // zoom center
+let seed = 11;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+const world = document.getElementById('world');
+const discs = CLUSTER.map(([x, y, size, dot], i) => {
+  const el = document.createElement('div');
+  el.className = 'disc';
+  const orb = document.createElement('i');
+  orb.style.width = orb.style.height = `${size}px`;
+  const b = document.createElement('b');
+  b.style.width = b.style.height = `${dot}px`;
+  el.append(orb, b);
+  if (i === MAYA) { const em = document.createElement('em'); em.textContent = 'MC'; b.appendChild(em); }
+  world.appendChild(el);
+  // Where it waits around "Introducing Peepl" (Frame 23): pushed out from the middle toward the edges, clear of the line
+  const dx = x - 968, dy = y - 560, len = Math.hypot(dx, dy) || 1;
+  const s = 2.3 + rnd() * 0.8;
+  let sx = Math.min(1860, Math.max(60, 968 + dx * s)), sy = Math.min(1040, Math.max(40, 560 + dy * s));
+  if (sy > 360 && sy < 720) sy = sy < 540 ? 360 - rnd() * 120 : 720 + rnd() * 120;
+  // It slides in from further out, past the edge
+  const fx = sx + (dx / len) * 600, fy = sy + (dy / len) * 600;
+  return { el, b, dot, x, y, sx, sy, fx, fy, inAt: DISCS_IN[0] + rnd() * DISCS_IN[1], gatherAt: GATHER[0] + rnd() * GATHER[1],
+    w1: 0.9 + rnd() * 0.8, w2: 0.8 + rnd() * 0.9, p1: rnd() * 6.3, p2: rnd() * 6.3 };
+});
+// Links: each disc to its two nearest neighbors in the cluster
+const linkSvg = document.getElementById('links');
+const pairs = new Set();
+discs.forEach((d, i) => {
+  discs.map((e, j) => [j, Math.hypot(e.x - d.x, e.y - d.y)]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, 2)
+    .forEach(([j]) => pairs.add(i < j ? `${i}-${j}` : `${j}-${i}`));
+});
+const links = [...pairs].map((k) => {
+  const [a, b] = k.split('-').map(Number);
+  const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  linkSvg.appendChild(ln);
+  return { ln, a: discs[a], b: discs[b] };
+});
+const pill = document.getElementById('pill');
+
+// ---- Paint frame t ----
+window.seek = (t) => {
+  paint(t);
+  // Zoom into Maya Chen: everything scales 2x about her center, so she stays put
+  const z = 1 + smooth(clamp((t - ZOOM[0]) / (ZOOM[1] - ZOOM[0])));
+  world.style.transform = `translate(${C.x}px, ${C.y}px) scale(${z}) translate(${-C.x}px, ${-C.y}px)`;
+  // A little drift while the discs float around the text, calming once they've gathered
+  const calm = 1 - smooth(clamp((t - GATHER[0]) / 1.4));
+  const amp = 2 + 5 * calm;
+  const pos = discs.map((d) => {
+    // Stacked springs (pure in t): slide in to the waiting spot, then gather into the cluster
+    const a = spring(t - d.inAt, 70, 12), g = spring(t - d.gatherAt, 45, 11);
+    const x = d.fx + (d.sx - d.fx) * a + (d.x - d.sx) * g + Math.sin(t * d.w1 + d.p1) * amp;
+    const y = d.fy + (d.sy - d.fy) * a + (d.y - d.sy) * g + Math.cos(t * d.w2 + d.p2) * amp;
+    d.el.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
+    d.el.style.opacity = easeOut(clamp((t - d.inAt) / 0.45)).toFixed(3);
+    return [x, y];
+  });
+  // Links come in once the discs have gathered
+  const lo = smooth(clamp((t - LINKS_IN[0]) / LINKS_IN[1]));
+  links.forEach((l) => {
+    const [ax, ay] = pos[discs.indexOf(l.a)], [bx, by] = pos[discs.indexOf(l.b)];
+    l.ln.setAttribute('x1', ax.toFixed(1)); l.ln.setAttribute('y1', ay.toFixed(1));
+    l.ln.setAttribute('x2', bx.toFixed(1)); l.ln.setAttribute('y2', by.toFixed(1));
+    l.ln.style.opacity = lo.toFixed(3);
+  });
+  // Close enough: Maya's initials pop up and her dot grows to hold them (34.8 -> 41.8, i.e. 83.5px on screen at 2x)
+  const m = discs[MAYA], pop = spring(t - INITIALS_AT, 260, 16);
+  m.b.style.width = m.b.style.height = `${(m.dot + 7 * clamp(pop, 0, 1.2)).toFixed(2)}px`;
+  const em = m.b.firstChild;
+  em.style.opacity = clamp((t - INITIALS_AT) / 0.12).toFixed(3);
+  em.style.transform = `scale(${(0.6 + 0.4 * pop).toFixed(3)})`;
+  // Then her profile pill pops up underneath
+  const pp = spring(t - PILL_AT, 220, 18);
+  pill.style.opacity = clamp((t - PILL_AT) / 0.15).toFixed(3);
+  pill.style.transform = `translateY(${(18 * (1 - pp)).toFixed(2)}px) scale(${(0.92 + 0.08 * pp).toFixed(4)})`;
+};
+window.DURATION = DURATION;
+
+if (new URLSearchParams(location.search).has('bg')) document.getElementById('c').classList.add('bg-only');
+
+window.ready = (async () => {
+  await document.fonts.load("400 100px 'Geist'");
+  await document.fonts.load("500 30px 'Geist'");
+  await document.fonts.load("600 17px 'Geist'");
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((im) => im.decode()));
+  measure();
+  window.seek(0);
+})();
+
+// Live preview when opened in a browser (?play): loops in real time. The render never uses this.
+if (new URLSearchParams(location.search).has('play')) {
+  window.ready.then(() => {
+    const t0 = performance.now();
+    const loop = (now) => { window.seek(((now - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>

@@ -34,33 +34,29 @@
   <div id="text"></div>
 </div>
 <script type="module">
-import { clamp, track } from '../lib/motion.js';
+import { clamp } from '../lib/motion.js';
 import { GRID, GRID_STEP, SHIFT } from './dots.js';
+import { makeLines, cutAfter, snapEase, smooth } from './typing.js';
 
 // ---- Script ----
 // 1. "150" typed big -> snap down -> " people." -> " Dunbar’s number." (lime)                   (Frames 1-3, 16)
 // 2. Clears -> "That’s how many your brain can handle." -> the colorful grid appears, middle outward (Frame 17)
-// 3. Clears -> "But what about the " -> a near-instant cut-zoom to 240px (the reference recording's cut) while the
-//    grid's top half shifts up and its bottom half down -> "rest?" types in the zoomed view (lime)   (Frames 18-19)
+// 3. Clears -> "But what about the " -> a cut-zoom to 240px between two keystrokes, typing carrying straight on (the
+//    reference recordings' cut) while the grid's top half shifts up and its bottom half down -> "rest?" (lime) (18-19)
 // 4. Once the line is typed, a white grid fills the screen around the text, middle outward          (Frame 19)
 // 5. Out: the text slides off to the left as it fades, then every dot fades out, inside outward; the film then
 //    continues into Vince's "Meeting people is easy" shot (spliced on in post, see make_cut.sh)
-const FADE = 0.09;             // each letter fades and sharpens in over this long
-const TRACK = 4;               // -0.04em letter-spacing at 100px
-const snapEase = (x) => (x < 0.5 ? 8 * x ** 4 : 1 - (-2 * x + 2) ** 4 / 2);   // hard in and out (quartic)
-const smooth = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);     // cubic in and out
-const easeOut = (x) => 1 - (1 - x) ** 3;
-
 // Line 1: 150 snaps from 442px (Frame 1) to 100px: a middle ground between a zoom and a hard cut
 const BIG = 4.42;
 const SNAP = [1.7, 1.95];
-// Line 3: after "But what about the " it cuts (almost) straight to 240px, then "rest?" is typed in the zoomed view
-// (Frame 19: left edge of the finished line at -1282px, off screen)
+// Line 3: right after "But what about the " it cuts (almost) straight to 240px and "rest?" keeps typing at the same
+// pace, no pause, like the reference recordings (Frame 19: left edge of the finished line at -1282px, off screen)
 const ZOOM_K = 2.4;
 const ZOOM_LEFT = -1282;
-const ZOOM = [12.5, 12.6];            // 0.1s: reads as a cut, with a frame or two of motion blur
-const REST_AT = 12.75;               // "rest?" starts once the cut has landed
-const SHIFT_T = [ZOOM[0] - 0.04, ZOOM[1] + 0.12]; // the grid opens up with the cut
+const L3 = { start: 11.25, every: 0.058 };
+const { zoom: ZOOM, next: REST_AT } = cutAfter(L3.start + 18 * L3.every, L3.every); // "But what about the " is 19 keys
+const REST_EVERY = 0.065;
+const SHIFT_T = [ZOOM[0] - 0.02, ZOOM[1] + 0.16]; // the grid opens up with the cut
 
 const LINES = [
   { parts: [
@@ -74,46 +70,25 @@ const LINES = [
   { parts: [{ text: 'That’s how many your brain can handle.', start: 6.2, every: 0.052 }],
     caretFrom: 6.0, clearAt: 10.4 },
   { parts: [
-      { text: 'But what about the ', start: 11.25, every: 0.058 },
-      { text: 'rest?', start: REST_AT, every: 0.075, lime: true },
+      { text: 'But what about the ', start: L3.start, every: L3.every },
+      { text: 'rest?', start: REST_AT, every: REST_EVERY, lime: true },
     ],
     caretFrom: 11.05, clearAt: 15.6, slideOut: true,
     scale: (t) => 1 + (ZOOM_K - 1) * snapEase(clamp((t - ZOOM[0]) / (ZOOM[1] - ZOOM[0]))),
-    beats: [ZOOM] },
+    beats: [ZOOM], zoomTo: { k: ZOOM_K, left: ZOOM_LEFT } },
 ];
-// Leaving: letters fade and blur away left to right (EXIT_STEP apart, EXIT_FADE each) while the line drifts left
-const EXIT_STEP = 0.014, EXIT_FADE = 0.22, EXIT_DRIFT = 110;
-// The last line leaves differently: the whole line slides off to the left while it fades
+// The last line leaves by sliding off to the left while it fades (typing.js)
 const SLIDE = { dist: 1500, dur: 0.75 };
 // Dots appear (no movement): one by one by distance from the text's middle, each fading in quickly
 const GRID_IN = [8.45, 1.0];         // start, spread (s): once "That’s how many your brain can handle." is typed
-const WHITE_IN = [REST_AT + 4 * 0.075 + 0.25, 1.2]; // once "rest?" is fully typed
+const WHITE_IN = [REST_AT + 4 * REST_EVERY + 0.25, 1.2]; // once "rest?" is fully typed
 const DOT_FADE = 0.13;
 // Out: after the text has gone, every dot fades out, inside outward (the same order they came in)
 const DOTS_OUT = [15.6 + SLIDE.dur - 0.15, 1.0];
 const DURATION = DOTS_OUT[0] + DOTS_OUT[1] + 0.15 + 0.25;
 
 // ---- Build ----
-const stage = document.getElementById('text');
-const lines = LINES.map((L) => {
-  const el = document.createElement('div');
-  el.className = 'line';
-  const caret = document.createElement('i');
-  caret.className = 'caret';
-  el.appendChild(caret);
-  stage.appendChild(el);
-  const chars = [];
-  for (const p of L.parts) [...p.text].forEach((ch, i) => chars.push({ ch, at: p.start + i * p.every, lime: !!p.lime }));
-  const spans = chars.map((c) => {
-    const sp = document.createElement('span');
-    sp.textContent = c.ch;
-    if (c.lime) sp.className = 'lime';
-    el.insertBefore(sp, caret);
-    return sp;
-  });
-  const exitEnd = L.slideOut ? L.clearAt + SLIDE.dur : L.clearAt + (chars.length - 1) * EXIT_STEP + EXIT_FADE;
-  return { ...L, el, caret, chars, spans, exitEnd, widths: [0] };
-});
+const { measure, paint } = makeLines(document.getElementById('text'), LINES, { slide: SLIDE });
 
 // Dots: one element each, centered on its position; delay = distance from the text's middle (960, 540)
 const dotLayer = document.getElementById('dots');
@@ -155,47 +130,7 @@ byDistance(all, DOTS_OUT[1], 'outDelay', (p) => [p.x, grid.includes(p) ? p.y + (
 
 // ---- Paint frame t ----
 window.seek = (t) => {
-  const active = lines.findIndex((L) => t >= L.caretFrom && t < L.clearAt);
-  lines.forEach((L, li) => {
-    let n = 0;
-    while (n < L.chars.length && L.chars[n].at <= t) n++;
-    const k = L.scale ? L.scale(t) : 1;
-    // Text shadow (Figma: 0 4px 24px black 25%), divided by the line's scale so it looks the same at every size
-    const drop = `0 ${(4 / k).toFixed(2)}px ${(24 / k).toFixed(2)}px rgba(0, 0, 0, 0.25)`;
-    L.chars.forEach((c, i) => {
-      const a = clamp((t - c.at) / FADE);
-      const out = L.slideOut ? 0 : clamp((t - (L.clearAt + i * EXIT_STEP)) / EXIT_FADE);
-      const e = easeOut(a) * (1 - easeOut(out));
-      const blur = a < 1 ? (1 - easeOut(a)) * 6 : out > 0 ? easeOut(out) * 10 : 0;
-      const sp = L.spans[i];
-      sp.style.opacity = e.toFixed(3);
-      sp.style.color = blur > 0.01 ? 'transparent' : '';
-      sp.style.textShadow = blur > 0.01 ? `0 0 ${blur.toFixed(2)}px ${c.lime ? 'var(--lime)' : 'var(--ink)'}, ${drop}` : drop;
-    });
-    // The line glides to stay centered: a spring toward -width/2 after each key (stacked springs, pure in t).
-    // Centered as Figma does it: the last letter's (negative) letter-spacing isn't part of the line's width.
-    const keys = [[0, 0], ...L.chars.map((c, i) => [c.at, -(L.widths[i + 1] + TRACK) / 2])];
-    const off = track(t, keys, 140, 24);
-    // Leaving: the whole line drifts left while its letters fade (screen px)
-    const leave = clamp((t - L.clearAt) / (L.exitEnd - L.clearAt));
-    const drift = L.slideOut ? -SLIDE.dist * leave ** 2.2 : -EXIT_DRIFT * smooth(leave);
-    L.el.style.opacity = L.slideOut ? (1 - smooth(leave)).toFixed(3) : '1';
-    // Line 3 zooms toward "rest?": a pan that grows with the zoom lands its left edge where Frame 19 has it
-    let pan = 0;
-    if (li === 2) {
-      const W = L.widths[L.chars.length] + TRACK;
-      const panEnd = ZOOM_LEFT - 960 + (ZOOM_K * W) / 2;
-      pan = (panEnd * (k - 1)) / (ZOOM_K - 1);
-    }
-    L.el.style.transform = `translate(${960 + pan + drift}px, 540px) scale(${k}) translate(${off}px, -50%)`;
-    // Caret: right after the last letter; solid while typing (and through a snap), blinking (1s) when idle
-    L.caret.style.left = `${L.widths[n] + 4}px`;
-    const snapped = (L.beats ?? []).reduce((m, [a, b]) => (t >= a ? Math.max(m, Math.min(t, b)) : m), 0);
-    const last = Math.max(n ? L.chars[n - 1].at : L.caretFrom, snapped);
-    const idle = t - last;
-    const blinkOn = idle < 0.45 || ((idle - 0.45) % 1.0) >= 0.5;
-    L.caret.style.opacity = li === active && blinkOn ? '1' : '0';
-  });
+  paint(t);
   // Colorful grid: each dot fades in on its delay; with the zoom, the top half shifts up and the bottom half down
   const s = smooth(clamp((t - SHIFT_T[0]) / (SHIFT_T[1] - SHIFT_T[0])));
   const gone = (p) => 1 - clamp((t - DOTS_OUT[0] - p.outDelay) / DOT_FADE);
@@ -214,12 +149,7 @@ window.ready = (async () => {
   await document.fonts.load("400 100px 'Geist'");
   await document.fonts.ready;
   await document.getElementById('bg').decode();
-  // From the rendered letters themselves (layout ignores their opacity / blur), so centering matches exactly
-  for (const L of lines) {
-    L.el.style.transform = 'none';
-    const left = L.el.getBoundingClientRect().left;
-    L.widths = [0, ...L.spans.map((sp) => sp.getBoundingClientRect().right - left)];
-  }
+  measure();
   window.seek(0);
 })();
 
