@@ -162,13 +162,15 @@ const INK = hex('#16121c'), FAINT = hex('#8d8590');
 window.seek = (t) => {
   // The card's shape: collapsed (46 x 60) -> unopened (358 x 60) -> opened (358 x 197), about its center
   const pop = spring(t - POP, 180, 14);
-  const widen = V === 'card' ? smoother(clamp((t - T.widen[0]) / (T.widen[1] - T.widen[0]))) : 1;
-  const open = smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0])));
+  // Version card: the widening and the opening settle with a slight bounce, like the pop (springs, user's call)
+  const widen = V === 'card' ? spring(t - T.widen[0], 160, 18) : 1;
+  const open = V === 'card' ? spring(t - T.open[0], 160, 18) : smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0])));
+  const openC = clamp(open);
   const w = V === 'card' ? lerp(46, OPEN.w, widen) : OPEN.w, h = V === 'card' ? lerp(60, OPEN.h, open) : OPEN.h;
   Object.assign(card.style, { left: `${CC.x - w / 2}px`, top: `${CC.y - h / 2}px`, width: `${w}px`, height: `${h}px` });
-  const radius = V === 'card' ? lerp(16, 14, open) : 14;
-  Object.assign(cardbg.style, { borderRadius: `${radius}px`, borderWidth: `${V === 'card' ? lerp(1, 1.5, open) : 1.5}px`,
-    borderColor: V === 'card' ? `rgba(${mix([255, 255, 255], BLUE, open).join(',')}, ${lerp(0.7, 1, open).toFixed(3)})` : 'var(--focus)' });
+  const radius = V === 'card' ? lerp(16, 14, openC) : 14;
+  Object.assign(cardbg.style, { borderRadius: `${radius}px`, borderWidth: `${V === 'card' ? lerp(1, 1.5, openC) : 1.5}px`,
+    borderColor: V === 'card' ? `rgba(${mix([255, 255, 255], BLUE, openC).join(',')}, ${lerp(0.7, 1, openC).toFixed(3)})` : 'var(--focus)' });
   cc.style.borderRadius = `${Math.max(0, radius - 1.5)}px`;
 
   // The camera. Version button: it starts close on the button and pulls back as the card opens around it. Then (both)

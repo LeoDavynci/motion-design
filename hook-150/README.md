@@ -12,8 +12,8 @@ Lee, whose initials and profile pill pop up. The camera then pulls back: it was 
 through the transcript), the camera pulls back to the phone around the box, a thumb taps send, and Jordan's new profile
 is created (skeleton card, then the profile card). It crossfades into the main film's (v17) "Every person. Every
 story." and "Remember the connection. Not just their name." (headline before the cards, crossfades instead of wipes),
-then a moment plays back (`moment.html`, two versions): the play button pops in and the memory card opens around it,
-or the collapsed card widens into "First meeting" and opens; a thumb taps play, the words darken and the waveform fills
+then, once that line has faded out, a moment plays back (`moment.html?v=card`; `?v=button` is the unused other
+version): the collapsed card widens into "First meeting" and opens, each with a slight bounce; a thumb taps play, the words darken and the waveform fills
 in, and at 3/4 the camera pulls back to the phone (Jordan's profile, scrolled to Moments).
 
 **Designs:** Figma file `bV6DQFxu5SHuF6hE5NIDeb`, page "Video Edits": Frames 1-3 and 16-19 (hook), 25, 22, 23, 26, 27,
@@ -41,5 +41,5 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
 
 **Render:** `zsh hook-150/make_cut.sh` renders the hook into the main film as a quick draft (30fps, 2 sub-frames,
 ~2 min); `zsh hook-150/make_cut.sh final` renders the full-quality version (60fps, 8 sub-frames of motion blur,
-~15 min). Hook only: `cd hook-150 && node ../render.mjs --fps 60 --dur 17.6 --sub 8`. Output (`hook-150/out/peepl-film-draft-button.mp4` and `-card.mp4`, one per version) goes to `hook-150/out/`
+~15 min). Hook only: `cd hook-150 && node ../render.mjs --fps 60 --dur 17.6 --sub 8`. Output (`hook-150/out/peepl-film-draft.mp4`) goes to `hook-150/out/`
 (ignored by git). No sound yet.

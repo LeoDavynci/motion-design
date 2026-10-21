@@ -9,7 +9,8 @@
 #   story:   v17, only "Every person. Every story." and "Remember the connection. Not just their name.":
 #            the headline comes in before the cards (it came after), the night background is already there (no curtain
 #            wipe in; the cut crossfades into it), the page-turn wipe between the two becomes a crossfade, and the
-#            "Remember the connection" beat holds instead of leaving (the cut ends on it). "Every story." fades out with
+#            "Remember the connection" beat holds a little longer, then fades out with his usual text exit, and his phone
+#            after it is switched off (the cut crossfades to the next part on the empty background). "Every story." fades out with
 #            the cards (his shot stopped drawing it the moment the cards were gone, so it vanished).
 import sys
 
@@ -45,8 +46,9 @@ elif mode == 'story':
     rep("t, 16.5, 18.6, { mode: 'arc', gap: 0.11, hlDelay: 0.3 });", "t, 15.6, 18.0, { mode: 'arc', gap: 0.11, hlDelay: 0.3 });")
     rep("const out = ease((t - 18.0) / 0.3); if (out >= 1) return;\n  FIELD.forEach(([ci, X, Y, ry, rz, s, edge], i) => {",
         "const out = ease((t - 18.0) / 0.3);\n  FIELD.forEach(([ci, X, Y, ry, rz, s, edge], i) => { if (out >= 1) return;")
-    # Hold "Remember the connection. Not just their name." to the end of the cut
-    rep("TX = 18.1;", "TX = 99;")
+    # "Remember the connection. Not just their name." holds ~0.5s longer, then fades out (his words() exit); no phone after it
+    rep("TX = 18.1;", "TX = 18.6;")
+    rep("  ghost('STORY', t, 16.3, 22.4, 880, -1);\n", "  ghost('STORY', t, 16.3, 22.4, 880, -1);\n  return;\n")
     # Only these two shots
     rep("const TOTAL = SEG.reduce(", "SHOTS.splice(0, SHOTS.length, ...SHOTS.filter((x) => x[2] === field || x[2] === moments));\nconst TOTAL = SEG.reduce(")
     # Film time for a film-internal time, for make_cut.sh
