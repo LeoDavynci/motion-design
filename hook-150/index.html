@@ -67,7 +67,7 @@ const LINES = [
       { text: ' people.', start: 2.2, every: 0.065 },
       { text: ' Dunbar’s number.', start: 3.3, every: 0.062, lime: true },
     ],
-    caretFrom: 0, clearAt: 5.4,
+    caretFrom: 0.12, clearAt: 5.4,   // a brief beat of background alone before the cursor shows
     scale: (t) => BIG + (1 - BIG) * snapEase(clamp((t - SNAP[0]) / (SNAP[1] - SNAP[0]))),
     beats: [SNAP] },
   { parts: [{ text: 'That’s how many your brain can handle.', start: 6.2, every: 0.052 }],
