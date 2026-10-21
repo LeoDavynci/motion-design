@@ -1,5 +1,6 @@
 // Typed lines, shared by the hook (index.html) and the "Introducing Peepl" section (intro.html). Typing motion after the
-// user's screen recordings: letters fade and sharpen in, the caret jumps after each one and blinks when idle, the line
+// user's screen recordings: letters fade and sharpen in, the caret jumps after each one and blinks while waiting for
+// the next key (it goes away once the line is finished), the line
 // glides to stay centered. A line can scale (a snap or a cut-zoom), and leaves either letter by letter (fade + blur,
 // left to right, drifting left) or as a whole (slides off to the left while fading).
 //
@@ -86,7 +87,9 @@ export function makeLines(stage, LINES, o = {}) {
       const last = Math.max(n ? L.chars[n - 1].at : L.caretFrom, snapped);
       const idle = t - last;
       const blinkOn = idle < 0.45 || ((idle - 0.45) % 1.0) >= 0.5;
-      L.caret.style.opacity = li === active && blinkOn ? '1' : '0';
+      // Once the whole line is typed the caret goes away (a short beat after the last key), user's call
+      const done = n === L.chars.length && t > L.chars[n - 1].at + 0.2;
+      L.caret.style.opacity = li === active && blinkOn && !done ? '1' : '0';
     });
   };
 

@@ -85,23 +85,25 @@ import { makeLines, cutAfter, snapEase, smooth, easeOut } from './typing.js';
 // 3. The text slides off to the left while fading; the discs gather into a cluster in the middle, linked (Frame 26)
 // 4. Zoom into the middle disc, Maya Chen (2x, Frame 27); close enough, her initials pop up in her dot
 // 5. Her profile pill pops up underneath (Frame 28)
-const INTRO = { start: 0.5, every: 0.065 };
+// The section opens on the background alone for a beat (the wipe in from Vince's shot takes its first 0.6s)
+const PAUSE = 0.8;
+const INTRO = { start: 0.6 + PAUSE, every: 0.065 };
 const { zoom: CUT, next: PEEPL_AT } = cutAfter(INTRO.start + 11 * INTRO.every, INTRO.every); // "Introducing " = 12 keys
-const DISCS_IN = [2.0, 0.6];          // start, stagger spread (s)
-const TEXT_OUT = 3.9;                 // the line slides off
-const GATHER = [4.45, 0.3];           // the discs gather: start, stagger spread
-const LINKS_IN = [5.25, 0.5];
-const ZOOM = [6.2, 7.3];              // into Maya Chen, 2x
-const INITIALS_AT = 7.0;
-const PILL_AT = 7.45;
-const DURATION = 9.4;
+const T = PAUSE + 0.1;                // everything after the typing moves with the pause
+const DISCS_IN = [2.0 + T, 0.6];      // start, stagger spread (s)
+const TEXT_OUT = 3.9 + T;             // the line slides off
+const GATHER = [4.45 + T, 0.3];       // the discs gather: start, stagger spread
+const ZOOM = [6.2 + T, 7.3 + T];      // into Maya Chen, 2x
+const INITIALS_AT = 7.0 + T;
+const PILL_AT = 7.45 + T;
+const DURATION = 9.4 + T;
 
 const LINES = [{
   parts: [
     { text: 'Introducing ', start: INTRO.start, every: INTRO.every },
     { text: 'Peepl', start: PEEPL_AT, every: 0.07, lime: true },
   ],
-  caretFrom: 0.25, clearAt: TEXT_OUT, slideOut: true,
+  caretFrom: INTRO.start - 0.25, clearAt: TEXT_OUT, slideOut: true,
   scale: (t) => 1 + snapEase(clamp((t - CUT[0]) / (CUT[1] - CUT[0]))),
   beats: [CUT], zoomTo: { k: 2, left: -261 },   // Frame 22: "Introducing Peepl" at 200px, left edge at -261px
 }];
@@ -124,6 +126,13 @@ let seed = 11;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
 const world = document.getElementById('world');
+// Around "Introducing Peepl" (Frame 23) the discs wait in four groups out near the corners, clear of the text: each
+// group is a quarter of the cluster (by direction from the middle), moved out toward its corner and loosened a little,
+// so its discs keep their neighbors and the same links hold from the slide-in to the gathered cluster.
+const CORNERS = [[300, 190], [1610, 175], [320, 905], [1600, 915]]; // top left, top right, bottom left, bottom right
+const groupOf = ([x, y]) => (y < C.y ? 0 : 2) + (x < C.x ? 0 : 1);
+const groups = CORNERS.map((_, g) => CLUSTER.filter((p) => groupOf(p) === g));
+const centroid = groups.map((ps) => [ps.reduce((a, p) => a + p[0], 0) / ps.length, ps.reduce((a, p) => a + p[1], 0) / ps.length]);
 const discs = CLUSTER.map(([x, y, size, dot], i) => {
   const el = document.createElement('div');
   el.className = 'disc';
@@ -134,22 +143,22 @@ const discs = CLUSTER.map(([x, y, size, dot], i) => {
   el.append(orb, b);
   if (i === MAYA) { const em = document.createElement('em'); em.textContent = 'MC'; b.appendChild(em); }
   world.appendChild(el);
-  // Where it waits around "Introducing Peepl" (Frame 23): pushed out from the middle toward the edges, clear of the line
-  const dx = x - 968, dy = y - 560, len = Math.hypot(dx, dy) || 1;
-  const s = 2.3 + rnd() * 0.8;
-  let sx = Math.min(1860, Math.max(60, 968 + dx * s)), sy = Math.min(1040, Math.max(40, 560 + dy * s));
-  if (sy > 360 && sy < 720) sy = sy < 540 ? 360 - rnd() * 120 : 720 + rnd() * 120;
-  // It slides in from further out, past the edge
-  const fx = sx + (dx / len) * 600, fy = sy + (dy / len) * 600;
-  return { el, b, dot, x, y, sx, sy, fx, fy, inAt: DISCS_IN[0] + rnd() * DISCS_IN[1], gatherAt: GATHER[0] + rnd() * GATHER[1],
+  const g = groupOf([x, y]), [cx, cy] = centroid[g], [tx, ty] = CORNERS[g];
+  let sx = tx + (x - cx) * 1.45, sy = ty + (y - cy) * 1.45;
+  sx = Math.min(1950, Math.max(-30, sx));
+  sy = g < 2 ? Math.min(330, Math.max(-20, sy)) : Math.max(750, Math.min(1100, sy)); // keep clear of the text
+  // It slides in from further out, past its corner
+  const ox = tx - 960, oy = ty - 540, ol = Math.hypot(ox, oy);
+  const fx = sx + (ox / ol) * 650, fy = sy + (oy / ol) * 650;
+  return { el, b, dot, g, x, y, sx, sy, fx, fy, inAt: DISCS_IN[0] + rnd() * DISCS_IN[1], gatherAt: GATHER[0] + rnd() * GATHER[1],
     w1: 0.9 + rnd() * 0.8, w2: 0.8 + rnd() * 0.9, p1: rnd() * 6.3, p2: rnd() * 6.3 };
 });
-// Links: each disc to its two nearest neighbors in the cluster
+// Links: each disc to its two nearest neighbors in its own group; the same links from the slide-in to the cluster
 const linkSvg = document.getElementById('links');
 const pairs = new Set();
 discs.forEach((d, i) => {
-  discs.map((e, j) => [j, Math.hypot(e.x - d.x, e.y - d.y)]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, 2)
-    .forEach(([j]) => pairs.add(i < j ? `${i}-${j}` : `${j}-${i}`));
+  discs.map((e, j) => [j, Math.hypot(e.x - d.x, e.y - d.y)]).filter(([j]) => j !== i && discs[j].g === d.g)
+    .sort((a, b) => a[1] - b[1]).slice(0, 2).forEach(([j]) => pairs.add(i < j ? `${i}-${j}` : `${j}-${i}`));
 });
 const links = [...pairs].map((k) => {
   const [a, b] = k.split('-').map(Number);
@@ -177,9 +186,9 @@ window.seek = (t) => {
     d.el.style.opacity = easeOut(clamp((t - d.inAt) / 0.45)).toFixed(3);
     return [x, y];
   });
-  // Links come in once the discs have gathered
-  const lo = smooth(clamp((t - LINKS_IN[0]) / LINKS_IN[1]));
+  // Links show as soon as both their discs are in, and stay through the gathering
   links.forEach((l) => {
+    const lo = Math.min(+l.a.el.style.opacity, +l.b.el.style.opacity);
     const [ax, ay] = pos[discs.indexOf(l.a)], [bx, by] = pos[discs.indexOf(l.b)];
     l.ln.setAttribute('x1', ax.toFixed(1)); l.ln.setAttribute('y1', ay.toFixed(1));
     l.ln.setAttribute('x2', bx.toFixed(1)); l.ln.setAttribute('y2', by.toFixed(1));
