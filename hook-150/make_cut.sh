@@ -1,10 +1,9 @@
 #!/bin/zsh
 # The hook, Vince's "Meeting people is easy / Remembering them is hard" shot, and "Introducing Peepl":
 #   1. the hook (index.html)
-#   2. Vince's whole problem shot, at 65% speed (his index.html, 2.4s-5.85s, from a temporary copy that plays only
+#   2. Vince's whole problem shot, at 65% speed (his index.html, 2.4s-6.5s, from a temporary copy that plays only
 #      that shot and keeps his night background, which in his film wipes to day at 4.6s; his file is never changed).
-#      In the copy, "Remembering them is hard." and the cards stay 0.35s longer (exit at 5.05s instead of 4.7s), a beat
-#      after the "hard." highlight before they leave (user's call).
+#      In the copy each line finishes, then holds ~0.45s before moving on (user's call; see vince_copy.py).
 #      His night background is close to the hook's, so a 0.4s crossfade reads as one continuous background.
 #   3. "Introducing Peepl" (intro.html), on the light background, brought in by a 0.6s soft wipe from the left, like the
 #      wipes Vince's film uses between its night and day scenes. It ends on the pale background once the phone fades.
@@ -41,7 +40,7 @@ node hook-150/render_segment.mjs --page hook-150/index.html --from 0 --to "$HOOK
 TMP=.cut-problem.tmp.html
 git show 964dee0:index.html | python3 hook-150/vince_copy.py problem > "$TMP" || { rm -f "$TMP"; exit 1; }
 VINCE_SPEED=0.65  # Vince's shot plays at 65% speed (user's call: it read too fast)
-VFROM=2.4; VTO=5.85
+VFROM=2.4; VTO=6.5
 node hook-150/render_segment.mjs --page "$TMP" --from "$VFROM" --to "$VTO" --speed "$VINCE_SPEED" --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
 rm -f "$TMP"
 node hook-150/render_segment.mjs --page hook-150/intro.html --from 0 --to "$INTRO_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/intro.mp4

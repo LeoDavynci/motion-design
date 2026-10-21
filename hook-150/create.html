@@ -174,9 +174,9 @@ const SENT = TAP + 0.12;
 const NOTE_IN = SENT + 0.2, MAKING_IN = SENT + 0.6;
 const SKEL = SENT + 1.25, MADE = SKEL + 1.35;
 // The phone leaves first, sliding up quickly as it fades; the cut's 0.8s background crossfade into Vince's film starts
-// 0.25s later, so the phone is gone before the backgrounds have changed much
-const LEAVE = [MADE + 2.0, 0.45];
-const DURATION = LEAVE[0] + 0.25 + 0.8;
+// 0.15s later, so the phone is gone before the backgrounds have changed much
+const LEAVE = [MADE + 2.0, 0.22];
+const DURATION = LEAVE[0] + 0.15 + 0.8;
 
 const smoother = (x) => x * x * x * (x * (6 * x - 15) + 10);
 
@@ -288,7 +288,7 @@ window.seek = (t) => {
   const c0 = { x: T0.x + BC.x * K0, y: T0.y + BC.y * K0 }, c1 = { x: T1.x + BC.x, y: T1.y + BC.y };
   const cx = lerp(c0.x, c1.x, e), cy = lerp(c0.y, c1.y, e);
   const lv = clamp((t - LEAVE[0]) / LEAVE[1]);
-  cam.style.transform = `translate(${(cx - BC.x * K).toFixed(3)}px, ${(cy - BC.y * K - 170 * lv * lv).toFixed(3)}px) scale(${K.toFixed(5)})`;
+  cam.style.transform = `translate(${(cx - BC.x * K).toFixed(3)}px, ${(cy - BC.y * K - 420 * lv * lv).toFixed(3)}px) scale(${K.toFixed(5)})`;
   cam.style.opacity = (1 - smooth(lv)).toFixed(3);
   const phone = smooth(clamp((e - 0.08) / 0.55)).toFixed(3);
   phoneBits.forEach((el) => { el.style.opacity = phone; });

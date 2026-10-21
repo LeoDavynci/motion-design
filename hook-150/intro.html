@@ -191,7 +191,7 @@ const PILL_AT = 7.45 + T;
 const OUT = [PILL_AT + 1.0, PILL_AT + 2.45]; // zoom out into the phone
 const TAP = OUT[1] + 0.75;            // the thumb presses the pill
 const SHEET = TAP + 0.14;             // the profile slides up
-const GONE = [SHEET + 1.9, 0.45];     // the phone slides down quickly as it fades away, leaving the pale background
+const GONE = [SHEET + 1.9, 0.22];     // the phone shoots down off the screen as it fades, leaving the pale background
 const DURATION = GONE[0] + GONE[1] + 0.3;
 
 // The phone screen is 393 x 852 (in phone px, #cam). Until the zoom-out the camera is at K0, where the screen exactly fills
@@ -294,7 +294,7 @@ window.seek = (t) => {
   const K = towards(K0, 1, e);
   const gone = smooth(clamp((t - GONE[0]) / GONE[1]));
   const drop = clamp((t - GONE[0]) / GONE[1]);
-  cam.style.transform = `translateY(${(170 * drop * drop).toFixed(2)}px) scale(${K.toFixed(5)})`;
+  cam.style.transform = `translateY(${(420 * drop * drop).toFixed(2)}px) scale(${K.toFixed(5)})`;
   cam.style.opacity = (1 - gone).toFixed(3);
   const S = towards(1, OUT_SCALE.scene, e);   // the map's scale in the frame
   scene.style.transform = `translate(${J.x}px, ${J.y}px) scale(${(S / K).toFixed(5)}) translate(${-C.x}px, ${-C.y}px)`;
