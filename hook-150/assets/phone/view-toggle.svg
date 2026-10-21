@@ -1,0 +1,17 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="112" height="56" viewBox="0 0 112 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="View toggle">
+<rect width="112" height="56" rx="28" fill="white" fill-opacity="0.6"/>
+<circle id="Active" cx="30" cy="28" r="24" fill="black" fill-opacity="0.08"/>
+<g id="Mindmap icon">
+<path id="Vector" d="M25.8333 22.1667C25.8333 23.0871 25.0871 23.8333 24.1667 23.8333C23.2462 23.8333 22.5 23.0871 22.5 22.1667C22.5 21.2462 23.2462 20.5 24.1667 20.5C25.0871 20.5 25.8333 21.2462 25.8333 22.1667Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+<path id="Vector_2" d="M37.5 23C37.5 23.9205 36.7538 24.6667 35.8333 24.6667C34.9129 24.6667 34.1667 23.9205 34.1667 23C34.1667 22.0795 34.9129 21.3333 35.8333 21.3333C36.7538 21.3333 37.5 22.0795 37.5 23Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+<path id="Vector_3" d="M32 28C32 29.1046 31.1046 30 30 30C28.8954 30 28 29.1046 28 28C28 26.8954 28.8954 26 30 26C31.1046 26 32 26.8954 32 28Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+<path id="Vector_4" d="M26.6667 33.8333C26.6667 34.7538 25.9205 35.5 25 35.5C24.0795 35.5 23.3333 34.7538 23.3333 33.8333C23.3333 32.9129 24.0795 32.1667 25 32.1667C25.9205 32.1667 26.6667 32.9129 26.6667 33.8333Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+<path id="Vector_5" d="M36.6667 33.8333C36.6667 34.7538 35.9205 35.5 35 35.5C34.0795 35.5 33.3333 34.7538 33.3333 33.8333C33.3333 32.9129 34.0795 32.1667 35 32.1667C35.9205 32.1667 36.6667 32.9129 36.6667 33.8333Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+<path id="Vector_6" d="M25.5 23.3333L28.5833 26.6667M34.3333 23.75L31.5833 26.8333M28.6667 29.3333L26.1667 32.6667M31.5 29.1667L33.8333 32.5833" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+</g>
+<g id="List icon">
+<path id="Vector_7" d="M75.3333 23H88.6667M75.3333 26.3333H88.6667M75.3333 29.6667H88.6667M75.3333 33H88.6667" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#16121C"/>
+</g>
+</g>
+</svg>

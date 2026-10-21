@@ -1,7 +1,7 @@
 #!/bin/zsh
 # The hook, Vince's "Meeting people is easy / Remembering them is hard" shot, and "Introducing Peepl":
 #   1. the hook (index.html)
-#   2. Vince's whole problem shot at its own pace (his index.html, 2.4s-5.5s, from a temporary copy that plays only
+#   2. Vince's whole problem shot, at 80% speed (his index.html, 2.4s-5.5s, from a temporary copy that plays only
 #      that shot and keeps his night background, which in his film wipes to day at 4.6s; his file is never changed).
 #      His night background is close to the hook's, so a 0.4s crossfade reads as one continuous background.
 #   3. "Introducing Peepl" (intro.html), on the light background, brought in by a 0.6s soft wipe from the left, like the
@@ -33,11 +33,12 @@ node hook-150/render_segment.mjs --page hook-150/index.html --from 0 --to "$HOOK
 TMP=.cut-problem.tmp.html
 sed -e 's/^const SHOTS = .*/const SHOTS = [[2.8, 5.0, problem]];/' -e "s/\[4.6, 'dA', 'diag'\], //" index.html > "$TMP"
 grep -q '^const SHOTS = \[\[2.8, 5.0, problem\]\];' "$TMP" && ! grep -q "\[4.6, 'dA'" "$TMP" || { echo "could not isolate the problem shot"; rm -f "$TMP"; exit 1; }
-node hook-150/render_segment.mjs --page "$TMP" --from 2.4 --to 5.5 --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
+VINCE_SPEED=0.8   # Vince's shot plays at 80% speed (user's call: it read too fast)
+node hook-150/render_segment.mjs --page "$TMP" --from 2.4 --to 5.5 --speed "$VINCE_SPEED" --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
 rm -f "$TMP"
 node hook-150/render_segment.mjs --page hook-150/intro.html --from 0 --to "$INTRO_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/intro.mp4
 
-FADE=0.4; WIPE=0.6; VINCE=3.1
+FADE=0.4; WIPE=0.6; VINCE=$(node -e "console.log((3.1 / ${VINCE_SPEED}).toFixed(3))")
 O1=$(node -e "console.log((${HOOK_DUR} - ${FADE}).toFixed(3))")
 O2=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE}).toFixed(3))")
 ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 \

@@ -81,10 +81,10 @@ const LINES = [
 const SLIDE = { dist: 1500, dur: 0.75 };
 // Dots appear (no movement): one by one by distance from the text's middle, each fading in quickly
 const GRID_IN = [8.45, 1.0];         // start, spread (s): once "That’s how many your brain can handle." is typed
-const WHITE_IN = [REST_AT + 4 * REST_EVERY + 0.25, 1.2]; // once "rest?" is fully typed
+const WHITE_IN = [REST_AT + 4 * REST_EVERY + 0.25, 0.95]; // once "rest?" is fully typed (spread ~20% quicker, user's call)
 const DOT_FADE = 0.13;
 // Out: after the text has gone, every dot fades out, inside outward (the same order they came in)
-const DOTS_OUT = [15.6 + SLIDE.dur - 0.15, 1.0];
+const DOTS_OUT = [15.6 + SLIDE.dur - 0.15, 0.8]; // ~20% quicker than it was (user's call)
 const DURATION = DOTS_OUT[0] + DOTS_OUT[1] + 0.15 + 0.25;
 
 // ---- Build ----
