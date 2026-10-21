@@ -10,7 +10,7 @@
   /* Keyframes from Figma "Video Edits" Frames 25, 22, 23, 26, 27/30, 28, then the phone frames (427:6972, 427:6981)
      and "2.6 Person profile / View details" (427:7102). Light background: four big blurred color shapes (blur 300) on
      #f5f5f5 with Texture/Grain dark, the frame at 85% opacity, the same throughout. Text: Geist Regular 100px, ink
-     #16121c, "Peepl" lime. Discs: the prototype's mindmap discs (white 50%, layer 60%, soft white inner glow), a white
+     #16121c; "Peepl" gets a lime highlight box (Frame 23). Discs: the prototype's mindmap discs (white 50%, layer 60%, soft white inner glow), a white
      center dot with a small shadow, dashed white links. Around the phone: the paler pastel background of the phone frames.
      The phone: a dark iPhone front, like the 3D phone in Vince's film. */
   :root { --ink: #16121c; --lime: #beff00; --caret: rgba(22, 18, 28, 0.45); --muted: #5b5361; }
@@ -86,6 +86,8 @@
     font: 400 100px/0.9 'Geist', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -0.04em; color: var(--ink); }
   .line span { white-space: pre; }
   .line .lime { color: var(--lime); }
+  /* The highlight behind "Peepl" (Figma Frame 23: #beff00, 263px tall at 200px text, from 44px above the line) */
+  .line .hl { position: absolute; z-index: -1; width: 0; background: var(--lime); }
   .caret { position: absolute; top: -0.06em; width: 0.025em; height: 1.02em; background: var(--caret); }
   /* Jordan Lee's pill: the prototype's "Profile" / map pill at 2.1x, as in Figma Frame 30 (225px wide in the phone) */
   #pill { position: absolute; left: 0; top: 0; width: 472.5px; box-sizing: border-box; display: flex;
@@ -165,7 +167,7 @@ import { makeLines, cutAfter, snapEase, smooth, easeOut } from './typing.js';
 
 // ---- Script ----
 // 1. A beat of background, then "Introducing " typed at 100px (Frame 25) -> a cut-zoom between keystrokes, typing
-//    carrying straight on, to 200px: "Peepl" in lime (Frame 22)
+//    carrying straight on, to 200px: "Peepl"; a lime highlight sweeps in behind it (Frame 23)
 // 2. The discs slide in from all around in four linked groups near the corners and drift a little (Frame 23)
 // 3. The text slides off to the left while fading; the groups gather into one cluster in the middle (Frame 26)
 // 4. Zoom into the middle disc, Jordan Lee (2x, Frame 30); close enough, his initials pop up in his dot; his pill pops
@@ -173,12 +175,14 @@ import { makeLines, cutAfter, snapEase, smooth, easeOut } from './typing.js';
 // 5. Zoom out: it was the phone's screen all along. The camera starts so close to a phone that its screen fills the frame,
 //    and pulls back to the whole phone on a pale background, the map's top controls and ask bar coming into view. The map
 //    pulls back less than the phone, Jordan and his pill less still, so they fit (Figma 427:6972)
-// 6. A thumb taps Jordan's pill; his profile slides up over the map (as in Vince's film, Figma "2.6 Person profile")
+// 6. A thumb taps Jordan's pill; his profile slides up over the map (as in Vince's film, Figma "2.6 Person profile"),
+//    then the phone fades away, leaving the pale background for the next section (create.html)
 const PAUSE = 0.5;                    // the background alone for a beat after the wipe in from Vince's shot (0.6s)
 const INTRO = { start: 0.6 + PAUSE, every: 0.065 };
 const { zoom: CUT, next: PEEPL_AT } = cutAfter(INTRO.start + 11 * INTRO.every, INTRO.every); // "Introducing " = 12 keys
 const T = PAUSE + 0.1;                // everything after the typing moves with the pause
 const DISCS_IN = [2.0 + T, 0.6];      // start, stagger spread (s)
+const HL_AT = DISCS_IN[0] - 0.22;     // "Peepl" is highlighted just before the discs come in
 const TEXT_OUT = 3.9 + T;             // the line slides off
 const GATHER = [4.45 + T, 0.3];       // the discs gather: start, stagger spread
 const ZOOM = [6.2 + T, 7.3 + T];      // into Jordan Lee, 2x
@@ -187,7 +191,8 @@ const PILL_AT = 7.45 + T;
 const OUT = [PILL_AT + 1.0, PILL_AT + 2.45]; // zoom out into the phone
 const TAP = OUT[1] + 0.75;            // the thumb presses the pill
 const SHEET = TAP + 0.14;             // the profile slides up
-const DURATION = SHEET + 2.4;
+const GONE = [SHEET + 1.9, 0.6];      // the phone fades away, leaving the pale background (start, length)
+const DURATION = GONE[0] + GONE[1] + 0.3;
 
 // The phone screen is 393 x 852 (in phone px, #cam). Until the zoom-out the camera is at K0, where the screen exactly fills
 // the frame's width (and well past its height); it ends at 1, the whole phone in the middle of the frame.
@@ -200,7 +205,7 @@ const OUT_SCALE = { scene: 0.45, jordan: 0.62, pill: 225 / 472.5 };
 const LINES = [{
   parts: [
     { text: 'Introducing ', start: INTRO.start, every: INTRO.every },
-    { text: 'Peepl', start: PEEPL_AT, every: 0.07, lime: true },
+    { text: 'Peepl', start: PEEPL_AT, every: 0.07, hl: HL_AT },
   ],
   caretFrom: INTRO.start - 0.25, clearAt: TEXT_OUT, slideOut: true,
   scale: (t) => 1 + snapEase(clamp((t - CUT[0]) / (CUT[1] - CUT[0]))),
@@ -284,7 +289,9 @@ window.seek = (t) => {
   // screen, the map is anchored on Jordan (J, where he already is in the frame) and pulls back less than the phone.
   const e = smooth(clamp((t - OUT[0]) / (OUT[1] - OUT[0])));
   const K = towards(K0, 1, e);
-  cam.style.transform = `scale(${K.toFixed(5)})`;
+  const gone = smooth(clamp((t - GONE[0]) / GONE[1]));
+  cam.style.transform = `scale(${(K * (1 - 0.04 * gone)).toFixed(5)})`;
+  cam.style.opacity = (1 - gone).toFixed(3);
   const S = towards(1, OUT_SCALE.scene, e);   // the map's scale in the frame
   scene.style.transform = `translate(${J.x}px, ${J.y}px) scale(${(S / K).toFixed(5)}) translate(${-C.x}px, ${-C.y}px)`;
   // The background stays put until the phone's top and bottom come into view, then it fits the screen's height

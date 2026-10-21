@@ -5,7 +5,8 @@
 #      that shot and keeps his night background, which in his film wipes to day at 4.6s; his file is never changed).
 #      His night background is close to the hook's, so a 0.4s crossfade reads as one continuous background.
 #   3. "Introducing Peepl" (intro.html), on the light background, brought in by a 0.6s soft wipe from the left, like the
-#      wipes Vince's film uses between its night and day scenes.
+#      wipes Vince's film uses between its night and day scenes. It ends on the pale background once the phone fades.
+#   4. "Speak into the mic" and the new profile (create.html), which starts on the same pale background (0.3s crossfade).
 # Run from anywhere:  zsh ~/motion-design/hook-150/make_cut.sh [draft|final]
 #   draft (default): 30fps, 2 sub-frames of motion blur. For checking timing while iterating.
 #   final: 60fps, 8 sub-frames. For versions to share.
@@ -25,7 +26,8 @@ export PATH="$HOME/motion-design/bin:$PATH"
 dur() { node -e "import('playwright').then(async({chromium})=>{const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await b.newPage();await p.goto('file://'+process.cwd()+'/$1');await p.evaluate(()=>window.ready);console.log(await p.evaluate(()=>window.DURATION));await b.close()})"; }
 HOOK_DUR=$(dur hook-150/index.html)
 INTRO_DUR=$(dur hook-150/intro.html)
-echo "hook: ${HOOK_DUR}s, intro: ${INTRO_DUR}s"
+CREATE_DUR=$(dur hook-150/create.html)
+echo "hook: ${HOOK_DUR}s, intro: ${INTRO_DUR}s, create: ${CREATE_DUR}s"
 mkdir -p hook-150/out
 node hook-150/render_segment.mjs --page hook-150/index.html --from 0 --to "$HOOK_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/silent.mp4
 
@@ -37,12 +39,14 @@ VINCE_SPEED=0.65  # Vince's shot plays at 65% speed (user's call: it read too fa
 node hook-150/render_segment.mjs --page "$TMP" --from 2.4 --to 5.5 --speed "$VINCE_SPEED" --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
 rm -f "$TMP"
 node hook-150/render_segment.mjs --page hook-150/intro.html --from 0 --to "$INTRO_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/intro.mp4
+node hook-150/render_segment.mjs --page hook-150/create.html --from 0 --to "$CREATE_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/create.mp4
 
-FADE=0.4; WIPE=0.6; VINCE=$(node -e "console.log((3.1 / ${VINCE_SPEED}).toFixed(3))")
+FADE=0.4; WIPE=0.6; PALE=0.3; VINCE=$(node -e "console.log((3.1 / ${VINCE_SPEED}).toFixed(3))")
 O1=$(node -e "console.log((${HOOK_DUR} - ${FADE}).toFixed(3))")
 O2=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE}).toFixed(3))")
-ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 \
-  -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2},format=yuv420p[v]" \
+O3=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE} + ${INTRO_DUR} - ${PALE}).toFixed(3))")
+ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 \
+  -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3},format=yuv420p[v]" \
   -map "[v]" -c:v libx264 -crf 16 -r "$FPS" hook-150/out/peepl-film-draft.mp4
 cp hook-150/out/silent.mp4 hook-150/out/peepl-hook-150.mp4
 echo done

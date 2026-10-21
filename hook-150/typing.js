@@ -4,10 +4,12 @@
 // glides to stay centered. A line can scale (a snap or a cut-zoom), and leaves either letter by letter (fade + blur,
 // left to right, drifting left) or as a whole (slides off to the left while fading).
 //
-// A line: { parts: [{ text, start, every, lime }], caretFrom, clearAt, slideOut?, scale?(t), beats?: [[t0, t1]],
+// A line: { parts: [{ text, start, every, lime, hl }], caretFrom, clearAt, slideOut?, scale?(t), beats?: [[t0, t1]],
 //           zoomTo?: { k, left } }  — zoomTo: at scale k the finished line's left edge sits at `left` (screen px), as in
 //           the Figma frame; the pan grows with the scale so the zoom heads straight there.
-import { clamp, track } from '../lib/motion.js';
+// A part with hl (a time) gets a highlight like the ones in Vince's film: a lime box that sweeps in left to right behind
+// the word (spring 220/24) at that time. o.hl = { top, height, pad: [left, right] } sizes it in the line's px (style it with .line .hl).
+import { clamp, track, spring } from '../lib/motion.js';
 
 export const FADE = 0.09;      // each letter fades and sharpens in over this long
 export const TRACK = 4;        // -0.04em letter-spacing at 100px
@@ -17,6 +19,7 @@ export const easeOut = (x) => 1 - (1 - x) ** 3;
 
 export function makeLines(stage, LINES, o = {}) {
   const { exitStep = 0.014, exitFade = 0.22, exitDrift = 110, slide = { dist: 1500, dur: 0.75 }, shadow = true } = o;
+  const hlBox = { top: -22, height: 131.5, pad: [0.5, 13], ...o.hl };   // Frame 23, in line px (left, right pad)
   const lines = LINES.map((L) => {
     const el = document.createElement('div');
     el.className = 'line';
@@ -25,7 +28,16 @@ export function makeLines(stage, LINES, o = {}) {
     el.appendChild(caret);
     stage.appendChild(el);
     const chars = [];
-    for (const p of L.parts) [...p.text].forEach((ch, i) => chars.push({ ch, at: p.start + i * p.every, lime: !!p.lime }));
+    let hl = null;
+    for (const p of L.parts) {
+      if (p.hl !== undefined) {
+        const box = document.createElement('i');
+        box.className = 'hl';
+        el.appendChild(box);
+        hl = { box, at: p.hl, from: chars.length, to: chars.length + p.text.length };
+      }
+      [...p.text].forEach((ch, i) => chars.push({ ch, at: p.start + i * p.every, lime: !!p.lime }));
+    }
     const spans = chars.map((c) => {
       const sp = document.createElement('span');
       sp.textContent = c.ch;
@@ -34,7 +46,7 @@ export function makeLines(stage, LINES, o = {}) {
       return sp;
     });
     const exitEnd = L.slideOut ? L.clearAt + slide.dur : L.clearAt + (chars.length - 1) * exitStep + exitFade;
-    return { ...L, el, caret, chars, spans, exitEnd, widths: [0] };
+    return { ...L, el, caret, chars, spans, exitEnd, hl, widths: [0] };
   });
 
   // From the rendered letters themselves (layout ignores their opacity / blur), so centering matches exactly
@@ -43,6 +55,11 @@ export function makeLines(stage, LINES, o = {}) {
       L.el.style.transform = 'none';
       const left = L.el.getBoundingClientRect().left;
       L.widths = [0, ...L.spans.map((sp) => sp.getBoundingClientRect().right - left)];
+      if (L.hl) {
+        const x0 = L.widths[L.hl.from], x1 = L.widths[L.hl.to] - (L.hl.to === L.chars.length ? 0 : TRACK);
+        Object.assign(L.hl.box.style, { left: `${x0 - hlBox.pad[0]}px`, top: `${hlBox.top}px`, height: `${hlBox.height}px` });
+        L.hl.w = x1 - x0 + hlBox.pad[0] + hlBox.pad[1];
+      }
     }
   };
 
@@ -81,6 +98,7 @@ export function makeLines(stage, LINES, o = {}) {
         pan = (panEnd * (k - 1)) / (L.zoomTo.k - 1);
       }
       L.el.style.transform = `translate(${960 + pan + drift}px, 540px) scale(${k}) translate(${off}px, -50%)`;
+      if (L.hl) L.hl.box.style.width = `${(L.hl.w * clamp(spring(t - L.hl.at, 220, 24), 0, 1.05)).toFixed(2)}px`;
       // Caret: right after the last letter; solid while typing (and through a snap), blinking (1s) when idle
       L.caret.style.left = `${L.widths[n] + 4}px`;
       const snapped = (L.beats ?? []).reduce((m, [a, b]) => (t >= a ? Math.max(m, Math.min(t, b)) : m), 0);

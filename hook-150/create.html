@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Peepl film: Speak into the mic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=block" rel="stylesheet">
+<style>
+  /* Keyframes from Figma "Video Edits": 430:7792 (the pale background), 430:7800 ("Speak into the mic"), 430:8025 (the
+     waveform across the screen), 430:8217 (the voice box, 3.6x the prototype's), 430:8352 (the phone, "Tell me about a
+     new person or moment"), then the prototype screens 2.3 / 2.4 / 2.5 "Add person / Create profile" (Processing,
+     Skeleton card, Preview displayed). Same pale background and dark phone as the end of intro.html. */
+  :root { --ink: #16121c; --muted: #5b5361; --faint: #8d8590; --focus: #2f4fd0; --caret: rgba(22, 18, 28, 0.45); }
+  html, body { margin: 0; background: #fff; }
+  #c { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #f4f4f4;
+    font-family: 'Geist', 'Helvetica Neue', Arial, sans-serif; }
+  .flat { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+
+  /* "Speak into the mic": Geist Regular 100px, ink, -4px tracking (typing.js) */
+  #text { position: absolute; inset: 0; }
+  .line { position: absolute; left: 0; top: 0; white-space: pre; transform-origin: 0 0;
+    font: 400 100px/0.9 'Geist', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -0.04em; color: var(--ink); }
+  .line span { white-space: pre; }
+  .caret { position: absolute; top: -0.06em; width: 0.025em; height: 1.02em; background: var(--caret); }
+
+  /* The waveform across the screen (Figma 430:8025): focus-blue bars, 8px wide every 24px, around y = 788 */
+  #wave { position: absolute; inset: 0; }
+  #wave i { position: absolute; left: 0; top: 0; background: var(--focus); }
+
+  /* The phone, as at the end of intro.html. #cam is the camera: translate + scale from its top-left */
+  #cam { position: absolute; left: 0; top: 0; width: 393px; height: 852px; transform-origin: 0 0; }
+  #device { position: absolute; left: -15.7px; top: -15.7px; right: -15.7px; bottom: -15.7px; border-radius: 70.7px;
+    background: linear-gradient(135deg, #6a6b70 0%, #2b2c30 22%, #4a4b50 48%, #222326 74%, #55565b 100%);
+    box-shadow: inset 0 0 0 0.8px rgba(255, 255, 255, 0.28), 0 0 0 0.6px rgba(0, 0, 0, 0.55),
+      0 46px 90px -16px rgba(8, 4, 14, 0.42), 0 14px 30px -10px rgba(8, 4, 14, 0.25); }
+  #device i { position: absolute; inset: 4.7px; border-radius: 66px; background: #07060a; box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.08); }
+  .btn { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #1d1e21, #5a5b60 55%, #2a2b2f); }
+  #screen { position: absolute; left: 0; top: 0; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; }
+  #screenbg { position: absolute; inset: 0; background: #f7f7f7 url(assets/create/screen-create.jpg) center / cover; }
+  #glare { position: absolute; inset: 0; border-radius: 55px;
+    background: linear-gradient(118deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 28%, rgba(255, 255, 255, 0) 42%); }
+  #island { position: absolute; left: 133.5px; top: 11px; width: 126px; height: 37px; border-radius: 19px; background: #000; }
+  .time { position: absolute; left: 34px; top: 16px; font-weight: 600; font-size: 16px; color: var(--ink); }
+  .status { position: absolute; right: 30px; top: 21px; width: 66px; height: 12px; }
+  /* Figma frames are 390 wide with a 2px border: their content sits at x 16, here at 17.5 in the 393 screen */
+  #close { position: absolute; left: 331.5px; top: 72px; width: 44px; height: 44px; box-sizing: border-box; border-radius: 22px;
+    background: rgba(255, 255, 255, 0.86); border: 1px solid rgba(255, 255, 255, 0.7); filter: drop-shadow(0 8px 16px rgba(22, 18, 28, 0.07)); }
+  #close img { position: absolute; left: 11px; top: 11px; width: 20px; height: 20px; }
+  .display { position: absolute; left: 17.5px; width: 358px; margin: 0; font-weight: 400; }
+  #ask { top: 216px; font-size: 32px; line-height: 36px; letter-spacing: -1.28px; color: var(--muted); }
+  #note { top: 136px; font-size: 24px; line-height: 1.25; letter-spacing: -0.96px; color: var(--faint); }
+  #making { top: 356px; font-size: 32px; line-height: 36px; letter-spacing: -1.28px; color: var(--ink); }
+  .display span { display: inline-block; }
+
+  /* The voice box (prototype composer, "Talking w/ Text"): 358 wide, 158 tall, at the bottom of the screen */
+  #box { position: absolute; left: 17.5px; top: 662px; width: 358px; height: 158px; box-sizing: border-box; border-radius: 31px;
+    background: rgba(255, 255, 255, 0.85); border: 1px solid #fff; box-shadow: 0 8px 32px rgba(22, 18, 28, 0.07); padding: 8px;
+    display: flex; flex-direction: column; gap: 10px; }
+  #say { margin: 0; padding: 4px; height: 78px; font-size: 15px; line-height: 1.3; color: var(--muted); }
+  #say span { opacity: 0; }
+  #tcaret { display: inline-block; width: 1.5px; height: 17px; margin: 0 0 -3px 1px; background: var(--muted); }
+  #row { display: flex; align-items: center; gap: 10px; height: 44px; }
+  #bwave { position: relative; flex: 1; height: 44px; }
+  #bwave i { position: absolute; left: 0; top: 0; width: 2px; border-radius: 1px; background: var(--focus); }
+  #pause { position: relative; flex: none; width: 44px; height: 44px; border-radius: 22px; background: #e9e9e9; }
+  #pause img { position: absolute; left: 10px; top: 10px; width: 24px; height: 24px; }
+  #send { position: relative; flex: none; width: 40px; height: 40px; border-radius: 20px; background: #1c1522; transform-origin: 50% 50%; }
+  #send img { position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; }
+
+  /* The new profile: a skeleton card, then the result card (prototype "Profile": Skeleton card / Create result) */
+  .card { position: absolute; left: 17.5px; top: 468px; width: 358px; height: 106px; box-sizing: border-box; overflow: hidden; opacity: 0; }
+  #skel { background: #fff; border-radius: 28px; box-shadow: 0 6px 20px rgba(51, 38, 102, 0.14); padding: 20px; display: flex; gap: 14px; align-items: center; }
+  #skel b { flex: none; width: 62px; height: 62px; border-radius: 31px; background: #f0f0f0; }
+  #skel div { display: flex; flex-direction: column; gap: 9px; }
+  #skel s { display: block; height: 12px; border-radius: 6px; background: #f0f0f0; }
+  #skel s:first-child { width: 170px; height: 18px; }
+  #skel s:nth-child(2) { width: 120px; }
+  #skel s:nth-child(3) { width: 80px; }
+  #shine { position: absolute; top: 0; left: 0; width: 120px; height: 106px;
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0) 100%); }
+  #made { background: #151271; border-radius: 21px; padding: 12px; }
+  #made .blob { position: absolute; display: block; }
+  #made .head { position: relative; display: flex; align-items: center; gap: 14px; height: 82px; }
+  #made .photo { position: relative; flex: none; width: 60px; height: 60px; box-sizing: border-box; border: 2px solid #fff; border-radius: 40px;
+    overflow: hidden; background: radial-gradient(circle, #1b2c86 0%, #253eab 27.5%, #2f4fd0 55%, #4750bc 60.6%, #5e52a9 66.3%, #8e5581 77.5%, #bd575a 88.8%, #ec5a32 100%); }
+  #made .photo img { position: absolute; left: 50%; top: 50%; width: 138px; height: 138px; transform: translate(-50%, -50%); }
+  #made .who { flex: 1; display: flex; flex-direction: column; gap: 4px; font-weight: 500; color: #fff; }
+  #made .name { font-size: 20px; line-height: 24px; letter-spacing: -0.8px; }
+  #made .role { font-size: 13px; line-height: 18px; letter-spacing: -0.52px; }
+  #made .met { font-size: 13px; line-height: 18px; letter-spacing: -0.52px; color: #ccc; }
+  #made .chev { flex: none; width: 19px; height: 19px; }
+
+  /* The thumb (as in Vince's film and intro.html) */
+  #thumb, .ripple { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; }
+  #thumb { width: 40px; height: 40px; margin: -20px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 5px 16px rgba(10, 6, 20, 0.32); }
+  .ripple { box-sizing: border-box; }
+  #r1 { border: 5px solid rgba(255, 255, 255, 0.9); }
+  #r2 { border: 2.5px solid rgba(22, 18, 28, 0.18); }
+</style>
+</head>
+<body>
+<div id="c">
+  <img class="flat" src="assets/phone/pale.png" alt="">
+  <div id="text"></div>
+  <div id="cam">
+    <div class="btn" style="left:-19.2px;top:123.5px;height:27.3px"></div>
+    <div class="btn" style="left:-19.2px;top:183.2px;height:56.2px"></div>
+    <div class="btn" style="left:-19.2px;top:255.6px;height:56.2px"></div>
+    <div class="btn" style="right:-19.2px;top:213.0px;height:85.2px"></div>
+    <div id="device"><i></i></div>
+    <div id="screen">
+      <div id="screenbg"></div>
+      <div class="time">9:41</div>
+      <img class="status" src="assets/phone/status-icons.svg" alt="">
+      <div id="close"><img src="assets/create/close.svg" alt=""></div>
+      <p class="display" id="ask">Tell me about a new person or moment</p>
+      <p class="display" id="note"></p>
+      <p class="display" id="making"></p>
+      <div class="card" id="skel"><b></b><div><s></s><s></s><s></s></div><i id="shine"></i></div>
+      <div class="card" id="made">
+        <img class="blob" src="assets/create/blob0.svg" style="left:71px;top:-237px;width:392px;height:352px" alt="">
+        <img class="blob" src="assets/create/blob1.svg" style="left:116px;top:-10px;width:332px;height:292px" alt="">
+        <img class="blob" src="assets/create/blob2.svg" style="left:-164px;top:-25px;width:352px;height:332px" alt="">
+        <div class="head">
+          <div class="photo"><img src="assets/create/avatar.png" alt=""></div>
+          <div class="who"><div class="name">Jordan Lee</div><div class="role">Founder @ [Startup] · Brooklyn</div><div class="met">Met Oct 2026</div></div>
+          <img class="chev" src="assets/create/chevron.svg" alt="">
+        </div>
+      </div>
+      <div id="box">
+        <p id="say"></p>
+        <div id="row">
+          <div id="bwave"></div>
+          <div id="pause"><img src="assets/create/stop.svg" alt=""></div>
+          <div id="send"><img src="assets/create/send.svg" alt=""></div>
+        </div>
+      </div>
+      <div id="island"></div>
+      <div id="glare"></div>
+    </div>
+  </div>
+  <div id="wave"></div>
+  <div class="ripple" id="r1"></div>
+  <div class="ripple" id="r2"></div>
+  <div id="thumb"></div>
+</div>
+<script type="module">
+import { clamp, spring } from '../lib/motion.js';
+import { makeLines, smooth, easeOut } from './typing.js';
+
+// ---- Script ----
+// 1. The phone has faded away (end of intro.html): the pale background alone for a beat
+// 2. "Speak into the mic" is typed, like the earlier lines (430:7800)
+// 3. A waveform slides in from the right until it runs the whole width under the text, its bars moving like the
+//    prototype's live waveform (430:8025)
+// 4. The text slides off; the waveform gathers into the voice box's waveform as the box opens up around it (430:8217).
+//    The box is already part-way through the transcript, which keeps typing until it's complete
+// 5. The box shrinks into its place at the bottom of the phone's screen as the camera pulls back and the phone's screen
+//    ("Tell me about a new person or moment") comes up around it (430:8352)
+// 6. A thumb taps send: the transcript moves to the top, "Creating a new profile for Jordan Lee...", a skeleton card,
+//    then Jordan's new profile card (prototype 2.3 / 2.4 / 2.5, as in Vince's film)
+const SPEAK = { start: 0.5, every: 0.06 };     // "Speak into the mic": 18 keys
+const WAVE_IN = [1.75, 1.3];                   // the waveform slides in from the right (start, length)
+const MORPH = [3.55, 4.55];                    // the waveform gathers into the box's; the box opens up
+const TEXT_OUT = MORPH[0] - 0.25;              // the line slides off
+const NOTE = 'Jordan Lee, met at Demo Day. Founder at [Startup], battery recycling for e-bikes. From Seattle, lives in Brooklyn now. Climbs Tuesdays. Owe them a hardware engineer intro.'.split(' ');
+const SAY = { start: 2.75, every: 0.13 };      // the transcript, word by word: about half typed once the box is open
+const SAID = SAY.start + (NOTE.length - 1) * SAY.every;
+const PULL = [SAID + 0.55, SAID + 1.95];       // the camera pulls back to the whole phone
+const TAP = PULL[1] + 0.75;                    // the thumb taps send
+const SENT = TAP + 0.12;
+const NOTE_IN = SENT + 0.2, MAKING_IN = SENT + 0.6;
+const SKEL = SENT + 1.25, MADE = SKEL + 1.35;
+const DURATION = MADE + 2.3;
+
+// ---- Typing ----
+const LINES = [{
+  parts: [{ text: 'Speak into the mic', start: SPEAK.start, every: SPEAK.every }],
+  caretFrom: SPEAK.start - 0.25, clearAt: TEXT_OUT, slideOut: true,
+}];
+const { measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
+
+// ---- The camera ----
+// The box is 3.6x the prototype's in Figma 430:8217 (left 316, top 322). At K0 the camera puts the phone's box exactly
+// there; it pulls back to 1, the phone in the middle of the frame (screen at 763.5, 114).
+const K0 = 3.6;
+const BOX = { x: 17.5, y: 662, w: 358, h: 158 };                  // in the phone's screen
+const T0 = { x: 316 - BOX.x * K0, y: 322 - BOX.y * K0 }, T1 = { x: 763.5, y: 114 };
+const BC = { x: BOX.x + BOX.w / 2, y: BOX.y + BOX.h / 2 };         // the box's center, the camera follows it
+const towards = (a, b, x) => a * (b / a) ** x;
+const lerp = (a, b, x) => a + (b - a) * x;
+
+// ---- Waveforms ----
+// The prototype's live waveform (Wave.tsx): every 100ms each bar jumps to 3 + rand * 18 * (0.45 + 0.55 |sin(i/3 + t)|)
+// px, t = ms / 260, easing there over 100ms. Here the random numbers are a seeded hash, so it's a pure function of time.
+const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const live = (i, t) => {
+  const tick = Math.max(0, t) * 10, k = Math.floor(tick), f = tick - k;
+  const h = (k) => 3 + hash(i * 97.3 + k * 13.37) * 18 * (0.45 + 0.55 * Math.abs(Math.sin(i / 3 + k * 0.385)));
+  return lerp(h(k), h(k + 1), f);
+};
+// Across the screen (430:8025): bars 8 wide every 24px from x = -36, centered on y = 788, 4x the prototype's heights
+const FULL = Array.from({ length: 84 }, (_, j) => ({ x: -32 + 24 * j }));
+const waveEl = document.getElementById('wave');
+FULL.forEach((b) => { b.el = document.createElement('i'); waveEl.appendChild(b.el); });
+// In the box: 30 bars, 2 wide every 6, centered in the wave's 236px (box x 39 + 6i, row center y 127)
+const BARS = 30, J0 = 19;   // the full-width bars J0..J0+29 become the box's bars
+const bwave = document.getElementById('bwave');
+const boxBars = Array.from({ length: BARS }, (_, i) => { const el = document.createElement('i'); el.style.left = `${30 + 6 * i}px`; bwave.appendChild(el); return el; });
+// Where a box bar is in the frame while the camera is at K0
+const boxBarAt = (i) => ({ x: T0.x + (BOX.x + 40 + 6 * i) * K0, y: T0.y + (BOX.y + 127) * K0 });
+
+// ---- Text in the phone ----
+const words = (el, list) => list.map((w, i) => { const s = document.createElement('span'); s.textContent = w; el.append(s); if (i < list.length - 1) el.append(' '); return s; });
+const $ = (id) => document.getElementById(id);
+const say = $('say');
+const sayWords = words(say, NOTE);
+const tcaret = document.createElement('i'); tcaret.id = 'tcaret';
+const noteWords = words($('note'), NOTE);
+const makingWords = words($('making'), 'Creating a new profile for Jordan Lee...'.split(' '));
+const cam = $('cam'), box = $('box'), send = $('send'), skel = $('skel'), shine = $('shine'), made = $('made');
+const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2');
+const phoneBits = ['device', 'screenbg', 'island', 'glare', 'close', 'ask'].map($).concat([...document.querySelectorAll('.btn, .time, .status')]);
+
+// ---- Paint frame t ----
+window.seek = (t) => {
+  paint(t);
+
+  // The waveform slides in from the right, then (MORPH) gathers into the box's waveform: the middle 30 bars move onto
+  // the box's bars, the rest fold into its ends and fade
+  const win = easeOut(clamp((t - WAVE_IN[0]) / WAVE_IN[1]));
+  const m = smooth(clamp((t - MORPH[0]) / (MORPH[1] - MORPH[0])));
+  waveEl.style.display = t < WAVE_IN[0] || m >= 1 ? 'none' : '';
+  FULL.forEach((b, j) => {
+    const i = clamp(j - J0, 0, BARS - 1), inBox = j - J0 === i, to = boxBarAt(i);
+    const x = lerp(b.x + (1 - win) * 2000, to.x, m), y = lerp(788, to.y, m);
+    const h = lerp(4 * live(j, t), inBox ? K0 * live(J0 + i, t) : 0, m), w = lerp(8, 2 * K0, m);
+    Object.assign(b.el.style, { width: `${w.toFixed(2)}px`, height: `${h.toFixed(2)}px`, borderRadius: `${(w / 2).toFixed(2)}px`,
+      transform: `translate(${(x - w / 2).toFixed(2)}px, ${(y - h / 2).toFixed(2)}px)`,
+      opacity: inBox ? '1' : (1 - smooth(clamp(m / 0.7))).toFixed(3) });
+  });
+  boxBars.forEach((el, i) => {
+    const h = live(J0 + i, t);
+    el.style.height = `${h.toFixed(2)}px`;
+    el.style.transform = `translateY(${(22 - h / 2).toFixed(2)}px)`;
+  });
+  bwave.style.opacity = m >= 1 ? '1' : '0';
+
+  // The box opens up from its waveform: a clip that grows from around the bars to the whole box, fading in
+  const open = smooth(clamp((m - 0.1) / 0.9));
+  const ins = [lerp(105, 0, open), lerp(137, 0, open), lerp(9, 0, open), lerp(33, 0, open)];
+  box.style.clipPath = `inset(${ins.map((v) => v.toFixed(2) + 'px').join(' ')} round ${lerp(22, 31, open).toFixed(2)}px)`;
+  box.style.opacity = t < MORPH[0] ? '0' : smooth(clamp((m - 0.05) / 0.5)).toFixed(3);
+
+  // The transcript types in word by word (each fades and sharpens in), the caret after the last word
+  let n = 0;
+  sayWords.forEach((s, i) => {
+    const a = clamp((t - SAY.start - i * SAY.every) / 0.15);
+    if (a > 0) n = i + 1;
+    s.style.opacity = easeOut(a).toFixed(3);
+    s.style.filter = a < 1 ? `blur(${((1 - a) * 2).toFixed(2)}px)` : '';
+  });
+  if (n) say.insertBefore(tcaret, sayWords[n - 1].nextSibling); else say.prepend(tcaret);
+  tcaret.style.opacity = t < SAID + 0.4 ? '1' : '0';
+
+  // The camera pulls back: the box shrinks into its place in the phone while the phone comes up around it
+  const e = smooth(clamp((t - PULL[0]) / (PULL[1] - PULL[0])));
+  const K = towards(K0, 1, e);
+  const c0 = { x: T0.x + BC.x * K0, y: T0.y + BC.y * K0 }, c1 = { x: T1.x + BC.x, y: T1.y + BC.y };
+  const cx = lerp(c0.x, c1.x, e), cy = lerp(c0.y, c1.y, e);
+  cam.style.transform = `translate(${(cx - BC.x * K).toFixed(3)}px, ${(cy - BC.y * K).toFixed(3)}px) scale(${K.toFixed(5)})`;
+  const phone = smooth(clamp((e - 0.08) / 0.55)).toFixed(3);
+  phoneBits.forEach((el) => { el.style.opacity = phone; });
+
+  // The thumb glides in from the lower right and taps send; the box drops away, the transcript and "Creating a new
+  // profile for Jordan Lee..." come in at the top
+  const u = t - TAP, press = clamp(u / 0.1) * (1 - clamp((u - 0.22) / 0.22));
+  const sx = T1.x + BOX.x + 358 - 9 - 20, sy = T1.y + BOX.y + 127;   // the send button's center in the frame
+  const gl = easeOut(clamp((u + 0.9) / 0.9)), fade = 1 - clamp((u - 0.12) / 0.2);
+  thumb.style.opacity = u > -0.9 && u < 0.4 ? fade.toFixed(3) : '0';
+  thumb.style.transform = `translate(${(sx + (1 - gl) * 150).toFixed(1)}px, ${(sy + (1 - gl) * 190).toFixed(1)}px) scale(${(1 - 0.2 * press).toFixed(3)})`;
+  const ring = easeOut(clamp(u / 0.4));
+  [[r1, 20], [r2, 22.4]].forEach(([el, base]) => {
+    const R = base + 60 * ring;
+    Object.assign(el.style, { width: `${2 * R}px`, height: `${2 * R}px`, opacity: u >= 0 && u < 0.4 ? (1 - ring).toFixed(3) : '0',
+      transform: `translate(${(sx - R).toFixed(1)}px, ${(sy - R).toFixed(1)}px)` });
+  });
+  send.style.transform = `scale(${(1 - 0.08 * press).toFixed(3)})`;
+  const away = smooth(clamp((t - SENT) / 0.4));
+  if (t >= SENT) {
+    box.style.opacity = (1 - away).toFixed(3);
+    box.style.transform = `translateY(${(36 * away).toFixed(2)}px)`;
+  } else box.style.transform = '';
+  $('ask').style.opacity = t >= SENT ? (+phone * (1 - smooth(clamp((t - SENT) / 0.25)))).toFixed(3) : phone;
+  const rise = (list, t0, gap) => list.forEach((s, i) => {
+    const a = easeOut(clamp((t - t0 - i * gap) / 0.35));
+    s.style.opacity = a.toFixed(3);
+    s.style.transform = `translateY(${(10 * (1 - a)).toFixed(2)}px)`;
+    s.style.filter = a < 1 ? `blur(${((1 - a) * 3).toFixed(2)}px)` : '';
+  });
+  rise(noteWords, NOTE_IN, 0.012);
+  rise(makingWords, MAKING_IN, 0.06);
+
+  // The skeleton card pops in, a shine sweeping across it; then Jordan's profile card takes its place
+  const sp = spring(t - SKEL, 200, 18), mp = spring(t - MADE, 200, 18);
+  const mo = clamp((t - MADE) / 0.25);
+  skel.style.opacity = (clamp((t - SKEL) / 0.18) * (1 - clamp((t - MADE - 0.1) / 0.25))).toFixed(3);
+  skel.style.transform = `translateY(${(14 * (1 - sp)).toFixed(2)}px) scale(${(0.95 + 0.05 * sp).toFixed(4)})`;
+  shine.style.transform = `translateX(${(-140 + (((t - SKEL) * 330) % 640)).toFixed(1)}px)`;
+  made.style.opacity = mo.toFixed(3);
+  made.style.transform = `scale(${(0.96 + 0.04 * mp).toFixed(4)})`;
+};
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  await document.fonts.load("400 100px 'Geist'");
+  await document.fonts.load("500 20px 'Geist'");
+  await document.fonts.load("600 16px 'Geist'");
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((im) => im.decode()));
+  const bg = new Image(); bg.src = 'assets/create/screen-create.jpg'; await bg.decode();
+  measure();
+  window.seek(0);
+})();
+
+// Live preview when opened in a browser (?play): loops in real time. The render never uses this.
+if (new URLSearchParams(location.search).has('play')) {
+  window.ready.then(() => {
+    const t0 = performance.now();
+    const loop = (now) => { window.seek(((now - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>
