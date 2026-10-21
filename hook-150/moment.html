@@ -5,14 +5,15 @@
 <title>Peepl film: a moment plays back</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400&family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400&display=block" rel="stylesheet">
 <style>
   /* Keyframes from Figma "Video Edits" 437:9943 (the collapsed moment), 437:9966 (unopened: "First meeting"), 437:10293
      (opened, before it plays), 437:9978 (playing: the words darken, the waveform fills in) and 437:10037 (the phone:
      "5.4 Person profile / Moment audio"). The big card is the phone's card at 3.5x (358 -> 1253 px wide).
      Two versions (?v=button / ?v=card): the play button alone pops in and the card opens around it as the camera pulls
      back; or the collapsed card widens into "First meeting", then opens. Either way: tap play, the memory plays, and at
-     3/4 the camera pulls back to the phone (dark frame as in the other phone shots).
+     halfway the camera pulls back to the phone (dark frame as in the other phone shots); then "Play it back." (445:10305)
+     fades in either side of it, and both leave.
      Shadows: one token everywhere, 0 8px 32px rgba(22, 18, 28, 0.07) in the phone's px (0 28px 112px at 3.5x); the
      Figma frames had three slightly different ones. */
   :root { --ink: #16121c; --muted: #5b5361; --faint: #8d8590; --focus: #2f4fd0; --shadow: 0 8px 32px rgba(22, 18, 28, 0.07); }
@@ -57,6 +58,11 @@
   .time { position: absolute; right: 14px; top: 156px; font: 400 11px/16px 'IBM Plex Mono', monospace; color: var(--muted); }
   #play { position: absolute; left: 14px; top: 148px; width: 32px; height: 32px; border-radius: 16px; background: var(--ink); box-shadow: var(--shadow); }
   #play svg { position: absolute; left: 10px; top: 10px; width: 12px; height: 12px; }
+
+  /* "Play it back." (Figma 445:10305): Geist 100px, ink, either side of the phone */
+  .pib { position: absolute; top: 485px; margin: 0; font: 400 100px/0.9 'Geist', 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -4px; color: var(--ink); white-space: nowrap; }
+  .pib span { display: inline-block; transform-origin: 50% 70%; }
 
   /* The thumb (as in the other shots) */
   #thumb, .ripple { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; }
@@ -106,6 +112,8 @@
       <div id="glare"></div>
     </div>
   </div>
+  <p class="pib" style="left:301px"><span>Play</span> <span>it</span></p>
+  <p class="pib" style="left:1360px"><span>back.</span></p>
   <div class="ripple" id="r1"></div>
   <div class="ripple" id="r2"></div>
   <div id="thumb"></div>
@@ -129,8 +137,10 @@ const T = V === 'button'
   : { widen: [POP + 0.65, POP + 1.3], open: [POP + 1.95, POP + 2.75] };  // collapsed -> "First meeting" -> opened
 const TAP = T.open[1] + 0.55;                       // the thumb taps play
 const PLAY = [TAP + 0.1, 4.4];                      // the memory plays (start, length)
-const PULL = [PLAY[0] + 0.75 * PLAY[1], 1.5];       // at 3/4 the camera pulls back to the phone (start, length)
-const DURATION = Math.max(PLAY[0] + PLAY[1], PULL[0] + PULL[1]) + 1.9;
+const PULL = [PLAY[0] + 0.5 * PLAY[1], 1.5];        // halfway through, the camera pulls back to the phone (start, length)
+const SAY = PULL[0] + PULL[1] + 0.15;               // then "Play it back." fades in, word by word, left to right
+const OUT = SAY + 2.1;                              // a beat after it's all in: the text fades out, the phone drops away
+const DURATION = OUT + 0.45 + 0.9;                  // and the background is left alone for the crossfade out
 
 // ---- Geometry (the Figma phone frame's px) ----
 // The opened card sits at (16, 529) in 437:10044, 358 x 197; it opens about its center. The screen shows the frame's
@@ -157,14 +167,18 @@ const HEIGHTS = [6, 12, 18, 10, 14, 20, 8, 16, 12, 6, 10, 18, 14, 8, 20, 12, 6, 
 const BLUE = hex('#2f4fd0'), ORANGE = hex('#ec5a32'), GREY = hex('#d8d8d8');
 const bars = HEIGHTS.map((h, i) => { const el = document.createElement('i'); Object.assign(el.style, { left: `${i * 5}px`, height: `${h}px`, top: `${10 - h / 2}px` }); waveEl.appendChild(el); return el; });
 const INK = hex('#16121c'), FAINT = hex('#8d8590');
+const sayWords = [...document.querySelectorAll('.pib span')];
 
 // ---- Paint frame t ----
 window.seek = (t) => {
   // The card's shape: collapsed (46 x 60) -> unopened (358 x 60) -> opened (358 x 197), about its center
   const pop = spring(t - POP, 180, 14);
-  // Version card: the widening and the opening settle with a slight bounce, like the pop (springs, user's call)
-  const widen = V === 'card' ? spring(t - T.widen[0], 160, 18) : 1;
-  const open = V === 'card' ? spring(t - T.open[0], 160, 18) : smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0])));
+  const widen = V === 'card' ? smoother(clamp((t - T.widen[0]) / (T.widen[1] - T.widen[0]))) : 1;
+  const open = smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0])));
+  // A slight bounce as the widening and the opening finish, like the pop: the whole card swells a little and settles
+  // (a rigid scale, so the text and the chevron don't shift inside it)
+  const bump = (u) => (u > 0 ? 0.028 * Math.sin(2 * Math.PI * 1.8 * u) * Math.exp(-5.5 * u) : 0);
+  const bounce = V === 'card' ? 1 + bump(t - T.widen[1] + 0.15) + bump(t - T.open[1] + 0.15) : 1;
   const openC = clamp(open);
   const w = V === 'card' ? lerp(46, OPEN.w, widen) : OPEN.w, h = V === 'card' ? lerp(60, OPEN.h, open) : OPEN.h;
   Object.assign(card.style, { left: `${CC.x - w / 2}px`, top: `${CC.y - h / 2}px`, width: `${w}px`, height: `${h}px` });
@@ -174,7 +188,7 @@ window.seek = (t) => {
   cc.style.borderRadius = `${Math.max(0, radius - 1.5)}px`;
 
   // The camera. Version button: it starts close on the button and pulls back as the card opens around it. Then (both)
-  // it holds the 3.5x card in the middle until 3/4 of the playback, then pulls back to the phone.
+  // it holds the 3.5x card in the middle until halfway through the playback, then pulls back to the phone.
   const e = smoother(clamp((t - PULL[0]) / PULL[1]));
   const near = V === 'button' ? 1 - smoother(clamp((t - T.open[0]) / (T.open[1] - T.open[0]))) : 0;
   let K = K_CARD * (1 + 1.6 * near);
@@ -184,7 +198,10 @@ window.seek = (t) => {
   const fin = toScreen(CC, 1, T1);
   cx = lerp(cx, fin.x, e); cy = lerp(cy, fin.y, e);
   const camT = { x: cx - (CC.x - 2) * S * K, y: cy - (CC.y - 2) * S * K };
-  cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${camT.y.toFixed(3)}px) scale(${K.toFixed(5)})`;
+  // At the end the phone drops away super fast, fading (as the other phones leave)
+  const lv = clamp((t - OUT - 0.05) / 0.22);
+  cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${(camT.y + 420 * lv * lv).toFixed(3)}px) scale(${K.toFixed(5)})`;
+  cam.style.opacity = (1 - smooth(lv)).toFixed(3);
   const phone = smooth(clamp((e - 0.08) / 0.55)).toFixed(3);
   phoneBits.forEach((el) => { el.style.opacity = phone; });
 
@@ -195,7 +212,7 @@ window.seek = (t) => {
   const inner = smooth(clamp((open - 0.35) / 0.65));
   if (V === 'card') {
     card.style.opacity = clamp((t - POP) / 0.12).toFixed(3);
-    card.style.transform = `scale(${(0.7 + 0.3 * pop).toFixed(4)})`;
+    card.style.transform = `scale(${((0.7 + 0.3 * pop) * bounce).toFixed(4)})`;
     const label = smooth(clamp((widen - 0.55) / 0.45));
     date.style.top = `${lerp(9.9, 14, open)}px`;
     show(date, label);
@@ -241,6 +258,16 @@ window.seek = (t) => {
   icPlay.style.display = playing ? 'none' : ''; icPause.style.display = playing ? '' : 'none';
   const p = clamp((t - PLAY[0]) / PLAY[1]);
   words.forEach((s, i) => { s.style.color = `rgb(${mix(FAINT, INK, clamp(p * NOTE.length - i)).join(',')})`; });
+  // "Play it back.": each word fades in blurred-to-sharp, settling down a little, left to right (Vince's text entrance),
+  // and leaves the way his do: fading while it lifts and blurs
+  const out = smooth(clamp((t - OUT) / 0.4));
+  sayWords.forEach((el, i) => {
+    const q = clamp((t - SAY - i * 0.14) / 0.85), a = 1 - (1 - q) ** 3, inv = 1 - a;
+    const blur = 11 * inv + 7 * out;
+    el.style.opacity = (a * (1 - out)).toFixed(3);
+    el.style.filter = blur > 0.3 ? `blur(${blur.toFixed(2)}px)` : '';
+    el.style.transform = `translateY(${(10 * inv - 16 * out).toFixed(2)}px) scale(${(1 + 0.12 * inv).toFixed(4)})`;
+  });
   bars.forEach((el, i) => {
     const a = clamp(p * bars.length - i);
     el.style.background = `rgb(${mix(GREY, mix(BLUE, ORANGE, i / (bars.length - 1)), a).join(',')})`;
@@ -252,6 +279,7 @@ if (q.has('bg')) $('c').classList.add('bake-bg');
 window.ready = (async () => {
   await document.fonts.load("400 15px 'IBM Plex Sans'");
   await document.fonts.load("400 11px 'IBM Plex Mono'");
+  await document.fonts.load("400 100px 'Geist'");
   await document.fonts.ready;
   await Promise.all([...document.images].map((im) => im.decode().catch(() => {})));
   window.seek(0);

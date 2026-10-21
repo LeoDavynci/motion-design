@@ -13,8 +13,9 @@ through the transcript), the camera pulls back to the phone around the box, a th
 is created (skeleton card, then the profile card). It crossfades into the main film's (v17) "Every person. Every
 story." and "Remember the connection. Not just their name." (headline before the cards, crossfades instead of wipes),
 then, once that line has faded out, a moment plays back (`moment.html?v=card`; `?v=button` is the unused other
-version): the collapsed card widens into "First meeting" and opens, each with a slight bounce; a thumb taps play, the words darken and the waveform fills
-in, and at 3/4 the camera pulls back to the phone (Jordan's profile, scrolled to Moments).
+version): the collapsed card widens into "First meeting" and opens, each settling with a slight bounce; a thumb taps play, the words darken and the waveform fills
+in, and halfway the camera pulls back to the phone (Jordan's profile, scrolled to Moments); "Play it back." fades in
+either side of it. Then the main film's "Ask your own notes." and its three prompts (prompts after the headline).
 
 **Designs:** Figma file `bV6DQFxu5SHuF6hE5NIDeb`, page "Video Edits": Frames 1-3 and 16-19 (hook), 25, 22, 23, 26, 27,
 28 (Introducing Peepl), then the phone frames 427:6972 / 427:6981 and "2.6 Person profile / View details" (427:7102,

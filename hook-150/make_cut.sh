@@ -12,7 +12,10 @@
 #      temporary copy: headline before the cards, crossfades instead of his wipes, see vince_copy.py), brought in by a
 #      0.8s crossfade from the new profile, ending on "Not just their name." held for a beat.
 #   6. A moment plays back (moment.html?v=card, the version the user picked: the collapsed card widens and opens; ?v=button
-#      is the other one), 0.8s crossfade once "Not just their name." has faded out.
+#      is the other one), 0.8s crossfade once "Not just their name." has faded out. Halfway through the memory it pulls
+#      back to the phone, "Play it back." fades in either side, then they leave.
+#   7. Vince's "Ask your own notes." and its three prompts (v17, temporary copy: prompts after the headline, smoother
+#      highlight, a beat, then it all fades out), 0.8s crossfade in. The cut ends there for now.
 # The "Meeting people is easy" shot stays the one from his first version (commit 964dee0), which this cut was timed on.
 # Run from anywhere:  zsh ~/motion-design/hook-150/make_cut.sh [draft|final]
 #   draft (default): 30fps, 2 sub-frames of motion blur. For checking timing while iterating.
@@ -66,10 +69,20 @@ O2=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE}).toFixed(3
 O3=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE} + ${INTRO_DUR} - ${PALE}).toFixed(3))")
 O4=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE} + ${INTRO_DUR} - ${PALE} + ${CREATE_DUR} - ${STORY}).toFixed(3))")
 node hook-150/render_segment.mjs --page "hook-150/moment.html?v=card" --from 0 --to "$MOMENT_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/moment.mp4
+
+# Vince's v17 "Ask your own notes." (his file is not changed): from just before it (his background alone) until it has
+# all faded out
+TMP=.cut-ask.tmp.html
+python3 hook-150/vince_copy.py ask < index.html > "$TMP" || { rm -f "$TMP"; exit 1; }
+RANGE=$(node -e "import('playwright').then(async({chromium})=>{const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await b.newPage();await p.goto('file://'+process.cwd()+'/$TMP');await p.evaluate(()=>window.ready);console.log(await p.evaluate(()=>[window.filmTime(window.BGT.ask)-0.9,window.filmTime(window.BGT.ask+4.1)].map((x)=>x.toFixed(3)).join(' ')));await b.close()})")
+AFROM=${RANGE% *}; ATO=${RANGE#* }
+node hook-150/render_segment.mjs --page "$TMP" --from "$AFROM" --to "$ATO" --fps "$FPS" --sub "$SUB" --out hook-150/out/ask.mp4
+rm -f "$TMP"
 STORY_DUR=$(node -e "console.log((${STO} - ${SFROM} + ${HOLD}).toFixed(3))")
 O5=$(node -e "console.log((${O4} + ${STORY_DUR} - ${STORY}).toFixed(3))")
-ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 -i hook-150/out/moment.mp4 \
-    -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4}[d];[d][5:v]xfade=transition=fade:duration=${STORY}:offset=${O5},format=yuv420p[v]" \
+O6=$(node -e "console.log((${O5} + ${MOMENT_DUR} - ${STORY}).toFixed(3))")
+ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 -i hook-150/out/moment.mp4 -i hook-150/out/ask.mp4 \
+    -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4}[d];[d][5:v]xfade=transition=fade:duration=${STORY}:offset=${O5}[e];[e][6:v]xfade=transition=fade:duration=${STORY}:offset=${O6},format=yuv420p[v]" \
     -map "[v]" -c:v libx264 -crf 16 -r "$FPS" hook-150/out/peepl-film-draft.mp4
 cp hook-150/out/silent.mp4 hook-150/out/peepl-hook-150.mp4
 echo done
