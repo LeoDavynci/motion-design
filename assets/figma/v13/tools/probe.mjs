@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 900, height: 1800 }, deviceScaleFactor: 1 });
+const p = await ctx.newPage();
+await p.goto('http://localhost:5173/?mock=100', { waitUntil: 'networkidle' });
+await p.addStyleTag({ content: '.device{--device-scale:2 !important}' }); await p.waitForTimeout(1500);
+const bb = await p.locator('.phone').boundingBox(); console.log(bb);
+console.log(await p.evaluate(()=>{const e=document.querySelector('.phone');const r=[];for(const c of e.querySelectorAll('*')){const s=c.className;if(typeof s==='string'&&/status|island|notch/i.test(s))r.push(s)}return r.slice(0,20)}));
+await p.screenshot({ path: 'assets/figma/v13/tools/probe.png', clip: bb });
+await b.close();

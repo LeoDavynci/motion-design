@@ -4,7 +4,8 @@ import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
-const FPS = arg('fps', 60), DUR = arg('dur', 15), SUB = arg('sub', 4);
+const FPS = arg('fps', 60), DUR = arg('dur', 15), SUB = arg('sub', 4), FROM = arg('from', 0), TO = arg('to', DUR), PART = arg('part', -1);
+const OUT = PART >= 0 ? `out/part_${PART}.mp4` : 'out/silent.mp4';
 mkdirSync('out', { recursive: true });
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] }); // lets file:// pages import ES modules
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
@@ -12,10 +13,10 @@ await page.goto(pathToFileURL(process.cwd() + '/index.html').href);
 await page.evaluate(() => window.ready);
 const vf = `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`;
 const ff = spawn('ffmpeg', ['-y', '-f', 'image2pipe', '-framerate', String(FPS * SUB), '-i', '-',
-  '-vf', vf, '-r', String(FPS), '-c:v', 'libx264', '-crf', '16', '-pix_fmt', 'yuv420p', 'out/silent.mp4'],
+  '-vf', vf, '-r', String(FPS), '-c:v', 'libx264', '-crf', '16', '-pix_fmt', 'yuv420p', OUT],
   { stdio: ['pipe', 'inherit', 'inherit'] });
-const total = Math.round(DUR * FPS * SUB);
-for (let i = 0; i < total; i++) {
+const total = Math.round(TO * FPS * SUB);
+for (let i = Math.round(FROM * FPS * SUB); i < total; i++) {
   await page.evaluate((t) => window.seek(t), i / (FPS * SUB));
   const png = await page.locator('#c').screenshot({ type: 'png' });
   if (!ff.stdin.write(png)) await new Promise((r) => ff.stdin.once('drain', r));

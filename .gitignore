@@ -1,7 +1,7 @@
 node_modules/
-out/
+out/*
+!out/final_v17.mp4
 .env
 old/
 tmp/
-*.mp4
 .DS_Store
