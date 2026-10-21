@@ -235,7 +235,10 @@ const world = document.getElementById('world');
 // Around "Introducing Peepl" (Frame 23) the discs wait in four groups out near the corners, clear of the text: each
 // group is a quarter of the cluster (by direction from the middle), moved out toward its corner and loosened a little,
 // so its discs keep their neighbors and the same links hold from the slide-in to the gathered cluster.
-const CORNERS = [[300, 190], [1610, 175], [320, 905], [1600, 915]]; // top left, top right, bottom left, bottom right
+const CORNERS = [[330, 150], [1590, 140], [340, 945], [1580, 950]]; // top left, top right, bottom left, bottom right
+// While they wait, every disc's whole edge stays clear of the line and its highlight (406-669) by 80px or more, and the
+// groups spread out along the top and bottom edges (user's call: they were touching the text)
+const CLEAR = { top: 406 - 80, bottom: 669 + 80 }, SPREAD = { x: 2.1, y: 1.0 };
 const groupOf = ([x, y]) => (y < C.y ? 0 : 2) + (x < C.x ? 0 : 1);
 const groups = CORNERS.map((_, g) => CLUSTER.filter((p) => groupOf(p) === g));
 const centroid = groups.map((ps) => [ps.reduce((a, p) => a + p[0], 0) / ps.length, ps.reduce((a, p) => a + p[1], 0) / ps.length]);
@@ -250,9 +253,9 @@ const discs = CLUSTER.map(([x, y, size, dot], i) => {
   if (i === JORDAN) { const em = document.createElement('em'); em.textContent = 'JL'; b.appendChild(em); }
   world.appendChild(el);
   const g = groupOf([x, y]), [cx, cy] = centroid[g], [tx, ty] = CORNERS[g];
-  let sx = tx + (x - cx) * 1.45, sy = ty + (y - cy) * 1.45;
-  sx = Math.min(1950, Math.max(-30, sx));
-  sy = g < 2 ? Math.min(330, Math.max(-20, sy)) : Math.max(750, Math.min(1100, sy)); // keep clear of the text
+  let sx = tx + (x - cx) * SPREAD.x, sy = ty + (y - cy) * SPREAD.y;
+  sx = Math.min(1960, Math.max(-40, sx));
+  sy = g < 2 ? Math.min(CLEAR.top - size / 2, Math.max(-30, sy)) : Math.max(CLEAR.bottom + size / 2, Math.min(1110, sy));
   // It slides in from further out, past its corner
   const ox = tx - 960, oy = ty - 540, ol = Math.hypot(ox, oy);
   const fx = sx + (ox / ol) * 650, fy = sy + (oy / ol) * 650;

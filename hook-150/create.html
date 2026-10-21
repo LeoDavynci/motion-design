@@ -124,7 +124,7 @@
         <img class="blob" src="assets/create/blob2.svg" style="left:-164px;top:-25px;width:352px;height:332px" alt="">
         <div class="head">
           <div class="photo"><img src="assets/create/avatar.png" alt=""></div>
-          <div class="who"><div class="name">Jordan Lee</div><div class="role">Founder @ [Startup] · Brooklyn</div><div class="met">Met Oct 2026</div></div>
+          <div class="who"><div class="name">Jordan Lee</div><div class="role">Founder @ Peepl · Brooklyn</div><div class="met">Met Oct 2026</div></div>
           <img class="chev" src="assets/create/chevron.svg" alt="">
         </div>
       </div>
@@ -161,11 +161,11 @@ import { makeLines, smooth, easeOut } from './typing.js';
 // 6. A thumb taps send: the transcript moves to the top, "Creating a new profile for Jordan Lee...", a skeleton card,
 //    then Jordan's new profile card (prototype 2.3 / 2.4 / 2.5, as in Vince's film)
 const SPEAK = { start: 0.5, every: 0.06 };     // "Speak into the mic": 18 keys
-const WAVE_IN = [1.75, 1.3];                   // the waveform slides in from the right (start, length)
-const MORPH = [3.55, 4.55];                    // the waveform gathers into the box's; the box opens up
+const WAVE_IN = [1.75, 1.9];                   // the waveform slides in from the right, unhurried (start, length)
+const MORPH = [4.15, 5.15];                    // the waveform gathers into the box's; the box opens up
 const TEXT_OUT = MORPH[0] - 0.25;              // the line slides off
-const NOTE = 'Jordan Lee, met at Demo Day. Founder at [Startup], battery recycling for e-bikes. From Seattle, lives in Brooklyn now. Climbs Tuesdays. Owe them a hardware engineer intro.'.split(' ');
-const SAY = { start: 2.75, every: 0.13 };      // the transcript, word by word: about half typed once the box is open
+const NOTE = 'Jordan Lee, met at Demo Day. Founder at Peepl, battery recycling for e-bikes. From Seattle, lives in Brooklyn now. Climbs Tuesdays. Owe them a hardware engineer intro.'.split(' ');
+const SAY = { start: 3.35, every: 0.13 };      // the transcript, word by word: about half typed once the box is open
 const SAID = SAY.start + (NOTE.length - 1) * SAY.every;
 const PULL = [SAID + 0.55, SAID + 1.95];       // the camera pulls back to the whole phone
 const TAP = PULL[1] + 0.75;                    // the thumb taps send

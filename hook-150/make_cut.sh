@@ -1,8 +1,10 @@
 #!/bin/zsh
 # The hook, Vince's "Meeting people is easy / Remembering them is hard" shot, and "Introducing Peepl":
 #   1. the hook (index.html)
-#   2. Vince's whole problem shot, at 65% speed (his index.html, 2.4s-5.5s, from a temporary copy that plays only
+#   2. Vince's whole problem shot, at 65% speed (his index.html, 2.4s-5.85s, from a temporary copy that plays only
 #      that shot and keeps his night background, which in his film wipes to day at 4.6s; his file is never changed).
+#      In the copy, "Remembering them is hard." and the cards stay 0.35s longer (exit at 5.05s instead of 4.7s), a beat
+#      after the "hard." highlight before they leave (user's call).
 #      His night background is close to the hook's, so a 0.4s crossfade reads as one continuous background.
 #   3. "Introducing Peepl" (intro.html), on the light background, brought in by a 0.6s soft wipe from the left, like the
 #      wipes Vince's film uses between its night and day scenes. It ends on the pale background once the phone fades.
@@ -33,15 +35,19 @@ node hook-150/render_segment.mjs --page hook-150/index.html --from 0 --to "$HOOK
 
 # Vince's film with only the problem shot, on its night background (his file is not changed)
 TMP=.cut-problem.tmp.html
-sed -e 's/^const SHOTS = .*/const SHOTS = [[2.8, 5.0, problem]];/' -e "s/\[4.6, 'dA', 'diag'\], //" index.html > "$TMP"
-grep -q '^const SHOTS = \[\[2.8, 5.0, problem\]\];' "$TMP" && ! grep -q "\[4.6, 'dA'" "$TMP" || { echo "could not isolate the problem shot"; rm -f "$TMP"; exit 1; }
+sed -e 's/^const SHOTS = .*/const SHOTS = [[2.8, 5.35, problem]];/' -e "s/\[4.6, 'dA', 'diag'\], //" \
+  -e "/words(\['Remembering'\]/s/, 4\.7, { mode: 'zoom'/, 5.05, { mode: 'zoom'/g" -e 's/(t - 4\.7 - i \* 0\.06)/(t - 5.05 - i * 0.06)/' index.html > "$TMP"
+grep -q '^const SHOTS = \[\[2.8, 5.35, problem\]\];' "$TMP" && ! grep -q "\[4.6, 'dA'" "$TMP" && [ "$(grep -c "5.05, { mode: 'zoom'" "$TMP")" = 1 ] \
+  && [ "$(grep -o "5.05, { mode: 'zoom'" "$TMP" | wc -l | tr -d ' ')" = 2 ] && grep -q '(t - 5.05 - i \* 0.06)' "$TMP" \
+  || { echo "could not isolate the problem shot"; rm -f "$TMP"; exit 1; }
 VINCE_SPEED=0.65  # Vince's shot plays at 65% speed (user's call: it read too fast)
-node hook-150/render_segment.mjs --page "$TMP" --from 2.4 --to 5.5 --speed "$VINCE_SPEED" --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
+VFROM=2.4; VTO=5.85
+node hook-150/render_segment.mjs --page "$TMP" --from "$VFROM" --to "$VTO" --speed "$VINCE_SPEED" --fps "$FPS" --sub "$SUB" --out hook-150/out/vince-problem.mp4
 rm -f "$TMP"
 node hook-150/render_segment.mjs --page hook-150/intro.html --from 0 --to "$INTRO_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/intro.mp4
 node hook-150/render_segment.mjs --page hook-150/create.html --from 0 --to "$CREATE_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/create.mp4
 
-FADE=0.4; WIPE=0.6; PALE=0.3; VINCE=$(node -e "console.log((3.1 / ${VINCE_SPEED}).toFixed(3))")
+FADE=0.4; WIPE=0.6; PALE=0.3; VINCE=$(node -e "console.log(((${VTO} - ${VFROM}) / ${VINCE_SPEED}).toFixed(3))")
 O1=$(node -e "console.log((${HOOK_DUR} - ${FADE}).toFixed(3))")
 O2=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE}).toFixed(3))")
 O3=$(node -e "console.log((${HOOK_DUR} - ${FADE} + ${VINCE} - ${WIPE} + ${INTRO_DUR} - ${PALE}).toFixed(3))")
