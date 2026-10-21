@@ -12,7 +12,7 @@
      #f5f5f5 with Texture/Grain dark, the frame at 85% opacity, the same throughout. Text: Geist Regular 100px, ink
      #16121c, "Peepl" lime. Discs: the prototype's mindmap discs (white 50%, layer 60%, soft white inner glow), a white
      center dot with a small shadow, dashed white links. Around the phone: the paler pastel background of the phone frames.
-     The phone is the prototype's desktop device frame (light silver). */
+     The phone: a dark iPhone front, like the 3D phone in Vince's film. */
   :root { --ink: #16121c; --lime: #beff00; --caret: rgba(22, 18, 28, 0.45); --muted: #5b5361; }
   html, body { margin: 0; background: #fff; }
   #c { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #f4f4f4; }
@@ -29,13 +29,20 @@
   #bg::after { content: ''; position: absolute; inset: 0; background-size: 200px;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' seed='0' stitchTiles='stitch'/><feColorMatrix type='luminanceToAlpha'/><feComponentTransfer result='speck'><feFuncA type='discrete' tableValues='0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'/></feComponentTransfer><feFlood flood-color='rgb(22,18,28)' flood-opacity='0.22'/><feComposite operator='in' in2='speck'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>"); }
 
-  /* The device (prototype App.tsx / .device: light silver frame, 11px around a 393 x 852 screen) */
-  #device { position: absolute; left: 0; top: 0; opacity: 0;
-    background: linear-gradient(150deg, #fdfdfe 0%, #e4e4e9 45%, #f4f4f6 100%);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(17, 17, 19, 0.08),
-      0 50px 100px -24px rgba(60, 50, 110, 0.28), 0 20px 40px -20px rgba(17, 17, 19, 0.18); }
-  /* The screen: the whole view until the zoom-out, then the phone's screen */
-  #screen { position: absolute; left: 0; top: 0; overflow: hidden; }
+  /* The phone, front on, like the 3D iPhone 15 Pro in Vince's film (lib/iphone3d.js): a 393 x 852 screen with 55px
+     corners in a black bezel (11px), a thin graphite titanium edge (4.7px) and the side buttons. #cam is the camera: it
+     starts so close that the screen fills the frame, and pulls back to the whole phone. */
+  #cam { position: absolute; left: 763.5px; top: 114px; width: 393px; height: 852px; transform-origin: 196.5px 426px; }
+  #device { position: absolute; left: -15.7px; top: -15.7px; right: -15.7px; bottom: -15.7px; border-radius: 70.7px;
+    background: linear-gradient(135deg, #6a6b70 0%, #2b2c30 22%, #4a4b50 48%, #222326 74%, #55565b 100%);
+    box-shadow: inset 0 0 0 0.8px rgba(255, 255, 255, 0.28), 0 0 0 0.6px rgba(0, 0, 0, 0.55),
+      0 46px 90px -16px rgba(8, 4, 14, 0.42), 0 14px 30px -10px rgba(8, 4, 14, 0.25); }
+  #device i { position: absolute; inset: 4.7px; border-radius: 66px; background: #07060a; box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.08); }
+  .btn { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #1d1e21, #5a5b60 55%, #2a2b2f); }
+  #screen { position: absolute; left: 0; top: 0; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; background: #f4f4f4; }
+  /* A faint reflection on the glass, there once the phone is seen whole */
+  #glare { position: absolute; inset: 0; border-radius: 55px; opacity: 0;
+    background: linear-gradient(118deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 28%, rgba(255, 255, 255, 0) 42%); }
   #scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
   #world { position: absolute; inset: 0; transform-origin: 0 0; }
   #links { position: absolute; inset: 0; overflow: visible; }
@@ -51,8 +58,8 @@
   .disc b em { font: 600 16.8px/1 'Geist', 'Helvetica Neue', Arial, sans-serif; font-style: normal; color: rgba(0, 0, 0, 0.4); }
 
   /* The prototype's mindmap chrome, in the phone (Figma 427:6972 / "1.3 Home tap a dot") */
-  #ui { position: absolute; width: 393px; height: 852px; opacity: 0; font-family: 'Geist', 'Helvetica Neue', Arial, sans-serif; }
-  /* The scene's background stays behind the map and covers the screen as it becomes the phone's */
+  #ui { position: absolute; left: 0; top: 0; width: 393px; height: 852px; font-family: 'Geist', 'Helvetica Neue', Arial, sans-serif; }
+  /* The scene's background, behind the map, covering the part of the screen in view */
   #scenebg { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; display: block; }
   /* The Dynamic Island, above everything on the screen (the profile too) */
   #island { position: absolute; left: 133.5px; top: 11px; width: 126px; height: 37px; border-radius: 19px; background: #000; }
@@ -81,7 +88,7 @@
   .line .lime { color: var(--lime); }
   .caret { position: absolute; top: -0.06em; width: 0.025em; height: 1.02em; background: var(--caret); }
   /* Jordan Lee's pill: the prototype's "Profile" / map pill at 2.1x, as in Figma Frame 30 (225px wide in the phone) */
-  #pill { position: absolute; left: 734px; top: 612px; width: 472.5px; box-sizing: border-box; display: flex;
+  #pill { position: absolute; left: 0; top: 0; width: 472.5px; box-sizing: border-box; display: flex;
     align-items: center; gap: 25.2px; padding: 16.8px 33.6px; border-radius: 999px; background: rgba(255, 255, 255, 0.8);
     box-shadow: 0 0 0 2.1px rgba(17, 17, 19, 0.03), 0 12.6px 42px -25.2px rgba(60, 50, 110, 0.18);
     font-family: 'Geist', 'Helvetica Neue', Arial, sans-serif; opacity: 0; transform-origin: 50% 0; }
@@ -117,30 +124,37 @@
     <img src="assets/intro/bg2.svg" style="left:360px;top:-875px;width:2065px;height:1931px" alt="">
     <img src="assets/intro/bg3.svg" style="left:456.7px;top:49.3px;width:2247.03px;height:1911.98px;transform:rotate(-25.77deg)" alt="">
   </div>
-  <div id="device"></div>
-  <div id="screen">
-    <img id="scenebg" src="assets/intro/bg.png" alt="">
-    <div id="scene">
-      <div id="world"><svg id="links" width="1920" height="1080"></svg></div>
+  <div id="cam">
+    <div class="btn" style="left:-19.2px;top:123.5px;height:27.3px"></div>
+    <div class="btn" style="left:-19.2px;top:183.2px;height:56.2px"></div>
+    <div class="btn" style="left:-19.2px;top:255.6px;height:56.2px"></div>
+    <div class="btn" style="right:-19.2px;top:213.0px;height:85.2px"></div>
+    <div id="device"><i></i></div>
+    <div id="screen">
+      <img id="scenebg" src="assets/intro/bg.png" alt="">
+      <div id="scene">
+        <div id="world"><svg id="links" width="1920" height="1080"></svg></div>
+      </div>
+      <div id="pill">
+        <div class="avatar"><img src="assets/intro/jordan.jpg" alt=""></div>
+        <div class="who"><div class="name">Jordan Lee</div><div class="role">Founder @Peepl</div></div>
+        <img class="chev" src="assets/intro/chevron.svg" alt="">
+      </div>
+      <div id="ui">
+        <div class="time">9:41</div>
+        <img class="status" src="assets/phone/status-icons.svg" alt="">
+        <img class="toggle" src="assets/phone/view-toggle.svg" alt="">
+        <div class="filters"><img src="assets/phone/filter.svg" alt=""><span>Filters</span><img src="assets/phone/chevron-down.svg" alt=""></div>
+        <div class="ask"><span>Ask me about people</span><img src="assets/phone/mic.svg" alt=""></div>
+        <div class="add"><img src="assets/phone/add-person.svg" alt=""></div>
+      </div>
+      <div id="scrim"></div>
+      <img id="profile" src="assets/phone/profile-jordan.png" alt="">
+      <div id="island"></div>
+      <div id="glare"></div>
     </div>
-    <div id="ui">
-      <div class="time">9:41</div>
-      <img class="status" src="assets/phone/status-icons.svg" alt="">
-      <img class="toggle" src="assets/phone/view-toggle.svg" alt="">
-      <div class="filters"><img src="assets/phone/filter.svg" alt=""><span>Filters</span><img src="assets/phone/chevron-down.svg" alt=""></div>
-      <div class="ask"><span>Ask me about people</span><img src="assets/phone/mic.svg" alt=""></div>
-      <div class="add"><img src="assets/phone/add-person.svg" alt=""></div>
-    </div>
-    <div id="scrim"></div>
-    <img id="profile" src="assets/phone/profile-jordan.png" alt="">
-    <div id="island"></div>
   </div>
   <div id="text"></div>
-  <div id="pill">
-    <div class="avatar"><img src="assets/intro/jordan.jpg" alt=""></div>
-    <div class="who"><div class="name">Jordan Lee</div><div class="role">Founder @Peepl</div></div>
-    <img class="chev" src="assets/intro/chevron.svg" alt="">
-  </div>
   <div class="ripple" id="r1"></div>
   <div class="ripple" id="r2"></div>
   <div id="thumb"></div>
@@ -156,8 +170,9 @@ import { makeLines, cutAfter, snapEase, smooth, easeOut } from './typing.js';
 // 3. The text slides off to the left while fading; the groups gather into one cluster in the middle (Frame 26)
 // 4. Zoom into the middle disc, Jordan Lee (2x, Frame 30); close enough, his initials pop up in his dot; his pill pops
 //    up underneath
-// 5. Zoom out: the view becomes the screen of a phone (the prototype's device frame) on a pale background, the map's
-//    top controls and ask bar fading in; Jordan and his pill shrink less than the rest, so they fit (Figma 427:6972)
+// 5. Zoom out: it was the phone's screen all along. The camera starts so close to a phone that its screen fills the frame,
+//    and pulls back to the whole phone on a pale background, the map's top controls and ask bar coming into view. The map
+//    pulls back less than the phone, Jordan and his pill less still, so they fit (Figma 427:6972)
 // 6. A thumb taps Jordan's pill; his profile slides up over the map (as in Vince's film, Figma "2.6 Person profile")
 const PAUSE = 0.5;                    // the background alone for a beat after the wipe in from Vince's shot (0.6s)
 const INTRO = { start: 0.6 + PAUSE, every: 0.065 };
@@ -174,12 +189,13 @@ const TAP = OUT[1] + 0.75;            // the thumb presses the pill
 const SHEET = TAP + 0.14;             // the profile slides up
 const DURATION = SHEET + 2.4;
 
-// The phone (prototype .device): a 393 x 852 screen with 55px corners in an 11px silver frame, in the middle
-const PHONE = { w: 393, h: 852, r: 55, pad: 11, x: 960 - 393 / 2, y: 540 - 852 / 2 };
-// In the phone: the scene at 0.45 of the zoomed view, Jordan (disc, dot, initials) at 0.62 and his pill at 0.476 (the
-// Figma phone's 225px pill). Jordan sits just above the middle of the screen, the pill below him.
+// The phone screen is 393 x 852 (in phone px, #cam). Until the zoom-out the camera is at K0, where the screen exactly fills
+// the frame's width (and well past its height); it ends at 1, the whole phone in the middle of the frame.
+const PHONE = { w: 393, h: 852 };
+const K0 = (1920 / PHONE.w) * 1.002;
+// On screen at the end: the map at 0.45 of the zoomed view, Jordan (disc, dot, initials) at 0.62, his pill at 0.476 (the
+// Figma phone's 225px pill)
 const OUT_SCALE = { scene: 0.45, jordan: 0.62, pill: 225 / 472.5 };
-const JORDAN_AT = { x: 960, y: 545 };
 
 const LINES = [{
   parts: [
@@ -205,6 +221,8 @@ const CLUSTER = [
 ];
 const JORDAN = 9;
 const C = { x: CLUSTER[JORDAN][0], y: CLUSTER[JORDAN][1] };   // zoom center
+// Jordan on the phone's screen: where the camera at K0 puts him exactly where he is in the frame
+const J = { x: PHONE.w / 2 + (C.x - 960) / K0, y: PHONE.h / 2 + (C.y - 540) / K0 };
 let seed = 11;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
@@ -250,8 +268,7 @@ const links = [...pairs].map((k) => {
   return { ln, a: discs[a], b: discs[b] };
 });
 const $ = (id) => document.getElementById(id);
-const pill = $('pill'), screen = $('screen'), scene = $('scene'), device = $('device'), ui = $('ui');
-const scenebg = $('scenebg'), island = $('island');
+const pill = $('pill'), cam = $('cam'), scene = $('scene'), scenebg = $('scenebg'), glare = $('glare');
 const scrim = $('scrim'), profile = $('profile'), thumb = $('thumb'), r1 = $('r1'), r2 = $('r2');
 const lerp = (a, b, x) => a + (b - a) * x;
 const towards = (a, b, x) => a * (b / a) ** x; // scale changes read evenly on a ratio scale
@@ -263,23 +280,17 @@ window.seek = (t) => {
   const z = 1 + smooth(clamp((t - ZOOM[0]) / (ZOOM[1] - ZOOM[0])));
   world.style.transform = `translate(${C.x}px, ${C.y}px) scale(${z}) translate(${-C.x}px, ${-C.y}px)`;
 
-  // Zoom out into the phone: the screen shrinks from the whole frame to the phone's screen, the scene inside it shrinks
-  // about Jordan, who moves to his place in the phone; the device frame and the map chrome come in
+  // Zoom out from inside the phone: the camera pulls back from K0 to 1, everything on the phone moving with it. In the
+  // screen, the map is anchored on Jordan (J, where he already is in the frame) and pulls back less than the phone.
   const e = smooth(clamp((t - OUT[0]) / (OUT[1] - OUT[0])));
-  const sx = lerp(0, PHONE.x, e), sy = lerp(0, PHONE.y, e), sw = lerp(1920, PHONE.w, e), sh = lerp(1080, PHONE.h, e);
-  const sr = lerp(0, PHONE.r, e);
-  Object.assign(screen.style, { left: `${sx}px`, top: `${sy}px`, width: `${sw}px`, height: `${sh}px`, borderRadius: `${sr}px` });
-  const pad = PHONE.pad * e;
-  Object.assign(device.style, { left: `${sx - pad}px`, top: `${sy - pad}px`, width: `${sw + 2 * pad}px`, height: `${sh + 2 * pad}px`,
-    borderRadius: `${sr + pad}px`, opacity: smooth(clamp((e - 0.45) / 0.45)).toFixed(3) });
-  scenebg.style.transform = `translate(-50%, -50%) scale(${Math.max(sw / 1920, sh / 1080).toFixed(4)})`;
-  const S = towards(1, OUT_SCALE.scene, e);
-  const ax = lerp(C.x, JORDAN_AT.x, e), ay = lerp(C.y, JORDAN_AT.y, e);
-  scene.style.transform = `translate(${ax - sx}px, ${ay - sy}px) scale(${S}) translate(${-C.x}px, ${-C.y}px)`;
-  ui.style.left = `${sw / 2 - PHONE.w / 2}px`;
-  ui.style.top = `${sh / 2 - PHONE.h / 2}px`;
-  ui.style.opacity = smooth(clamp((e - 0.6) / 0.4)).toFixed(3);
-  Object.assign(island.style, { left: `${sw / 2 - 63}px`, top: `${sh / 2 - PHONE.h / 2 + 11}px`, opacity: ui.style.opacity });
+  const K = towards(K0, 1, e);
+  cam.style.transform = `scale(${K.toFixed(5)})`;
+  const S = towards(1, OUT_SCALE.scene, e);   // the map's scale in the frame
+  scene.style.transform = `translate(${J.x}px, ${J.y}px) scale(${(S / K).toFixed(5)}) translate(${-C.x}px, ${-C.y}px)`;
+  // The background stays put until the phone's top and bottom come into view, then it fits the screen's height
+  const bgS = Math.max(towards(1, PHONE.h / 1080, e), Math.min(PHONE.h * K, 1080) / 1080);
+  scenebg.style.transform = `translate(-50%, -50%) scale(${(bgS / K).toFixed(5)})`;
+  glare.style.opacity = e.toFixed(3);
 
   // A little drift while the discs float around the text, calming once they've gathered
   const calm = 1 - smooth(clamp((t - GATHER[0]) / 1.4));
@@ -311,21 +322,21 @@ window.seek = (t) => {
   em.style.opacity = clamp((t - INITIALS_AT) / 0.12).toFixed(3);
   em.style.transform = `scale(${(0.6 + 0.4 * pop).toFixed(3)})`;
 
-  // Jordan's pill pops up underneath him, then rides the zoom-out into the phone, shrinking to the Figma phone's size
+  // Jordan's pill pops up underneath him, then rides the zoom-out, shrinking to the Figma phone's size. Worked out in
+  // the frame (scale psv, top dy below Jordan's center) and placed on the phone.
   const pp = spring(t - PILL_AT, 220, 18);
   const sheet = spring(t - SHEET, 90, 16);
   const tapU = t - TAP, press = clamp(tapU / 0.1) * (1 - clamp((tapU - 0.22) / 0.22));
-  const ps = towards(1, OUT_SCALE.pill, e) * (0.92 + 0.08 * pp) * (1 - 0.04 * press);
-  const dotR = (dotNow * 2 * towards(1, OUT_SCALE.jordan, e)) / 2;
-  const top = lerp(612, JORDAN_AT.y + dotR + 12, e);
-  const cx = lerp(970.25, JORDAN_AT.x, e);
+  const psv = towards(1, OUT_SCALE.pill, e) * (0.92 + 0.08 * pp) * (1 - 0.04 * press);
+  const dotR = (dotNow * 2 * towards(1, OUT_SCALE.jordan, e)) / 2;   // Jordan's dot radius in the frame (world at 2x)
+  const dx = lerp(2.45, 0, e), dy = lerp(79.4, dotR + 12, e) + 18 * (1 - pp);
   pill.style.opacity = (clamp((t - PILL_AT) / 0.15) * (1 - clamp((sheet - 0.2) / 0.25))).toFixed(3);
-  pill.style.transform = `translate(${(cx - 970.25).toFixed(2)}px, ${(top - 612 + 18 * (1 - pp)).toFixed(2)}px) scale(${ps.toFixed(4)})`;
+  pill.style.transform = `translate(${(J.x + dx / K - 236.25).toFixed(3)}px, ${(J.y + dy / K).toFixed(3)}px) scale(${(psv / K).toFixed(5)})`;
 
-  // The thumb glides in from the lower right, presses the pill, a ring ripples out, and it lifts away
-  const pillCY = top + (109.2 * ps) / 2;
+  // The thumb glides in from the lower right, presses the pill, a ring ripples out, and it lifts away (in the frame)
+  const pillCX = 960 + (J.x - PHONE.w / 2) * K + dx, pillCY = 540 + (J.y - PHONE.h / 2) * K + dy + (109.2 * psv) / 2;
   const u = tapU, m = easeOut(clamp((u + 0.9) / 0.9)), fade = 1 - clamp((u - 0.12) / 0.2);
-  const tapX = JORDAN_AT.x + 55;          // on the pill's right side, clear of his name
+  const tapX = pillCX + 55;          // on the pill's right side, clear of his name
   const tx = tapX + (1 - m) * 150, ty = pillCY + (1 - m) * 190;
   thumb.style.opacity = u > -0.9 && u < 0.4 ? fade.toFixed(3) : '0';
   thumb.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${(1 - 0.2 * press).toFixed(3)})`;

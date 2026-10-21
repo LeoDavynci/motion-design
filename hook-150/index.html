@@ -56,6 +56,9 @@ const ZOOM_LEFT = -1282;
 const L3 = { start: 11.25, every: 0.058 };
 const { zoom: ZOOM, next: REST_AT } = cutAfter(L3.start + 18 * L3.every, L3.every); // "But what about the " is 19 keys
 const REST_EVERY = 0.065;
+// The white dots fill in once "rest?" is typed; the line leaves just after they've filled (no pause, user's call)
+const WHITE_IN = [REST_AT + 4 * REST_EVERY + 0.25, 0.95]; // start, spread (s)
+const REST_CLEAR = WHITE_IN[0] + WHITE_IN[1] + 0.3;
 const SHIFT_T = [ZOOM[0] - 0.02, ZOOM[1] + 0.16]; // the grid opens up with the cut
 
 const LINES = [
@@ -73,7 +76,7 @@ const LINES = [
       { text: 'But what about the ', start: L3.start, every: L3.every },
       { text: 'rest?', start: REST_AT, every: REST_EVERY, lime: true },
     ],
-    caretFrom: 11.05, clearAt: 15.6, slideOut: true,
+    caretFrom: 11.05, clearAt: REST_CLEAR, slideOut: true,
     scale: (t) => 1 + (ZOOM_K - 1) * snapEase(clamp((t - ZOOM[0]) / (ZOOM[1] - ZOOM[0]))),
     beats: [ZOOM], zoomTo: { k: ZOOM_K, left: ZOOM_LEFT } },
 ];
@@ -81,10 +84,9 @@ const LINES = [
 const SLIDE = { dist: 1500, dur: 0.75 };
 // Dots appear (no movement): one by one by distance from the text's middle, each fading in quickly
 const GRID_IN = [8.45, 1.0];         // start, spread (s): once "That’s how many your brain can handle." is typed
-const WHITE_IN = [REST_AT + 4 * REST_EVERY + 0.25, 0.95]; // once "rest?" is fully typed (spread ~20% quicker, user's call)
 const DOT_FADE = 0.13;
 // Out: after the text has gone, every dot fades out, inside outward (the same order they came in)
-const DOTS_OUT = [15.6 + SLIDE.dur - 0.15, 0.8]; // ~20% quicker than it was (user's call)
+const DOTS_OUT = [REST_CLEAR + SLIDE.dur - 0.15, 0.8]; // ~20% quicker than it was (user's call)
 const DURATION = DOTS_OUT[0] + DOTS_OUT[1] + 0.15 + 0.25;
 
 // ---- Build ----
