@@ -1,5 +1,8 @@
 // node hook-150/render_segment.mjs --page <html, from the studio root> --from 2.6 --to 4.6 --out <mp4> [--fps 60 --sub 8]
-// Like render.mjs, but renders only [from, to] of a film (render.mjs always starts at 0). Run from ~/motion-design.
+// Like render.mjs, but renders any [from, to] of a film (render.mjs always starts at 0), and captures each sub-frame as a
+// quality-100 JPEG of the page instead of a PNG of #c: with a grainy background a 1080p PNG takes ~400ms to encode, the
+// JPEG ~30ms (about 13x faster), and the difference disappears in the sub-frame blend and the H.264 encode.
+// Run from ~/motion-design. The film must fill the 1920 x 1080 page from its top-left corner (both films do).
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -11,13 +14,13 @@ const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, de
 await page.goto(pathToFileURL(process.cwd() + '/' + PAGE).href);
 await page.evaluate(() => window.ready);
 const vf = `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`;
-const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS * SUB), '-i', '-',
+const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(FPS * SUB), '-i', '-',
   '-vf', vf, '-r', String(FPS), '-c:v', 'libx264', '-crf', '16', '-pix_fmt', 'yuv420p', OUT], { stdio: ['pipe', 'inherit', 'inherit'] });
 const total = Math.round((TO - FROM) * FPS * SUB);
 for (let i = 0; i < total; i++) {
   await page.evaluate((t) => window.seek(t), FROM + i / (FPS * SUB));
-  const png = await page.locator('#c').screenshot({ type: 'png' });
-  if (!ff.stdin.write(png)) await new Promise((r) => ff.stdin.once('drain', r));
+  const jpg = await page.screenshot({ type: 'jpeg', quality: 100, clip: { x: 0, y: 0, width: 1920, height: 1080 } });
+  if (!ff.stdin.write(jpg)) await new Promise((r) => ff.stdin.once('drain', r));
 }
 ff.stdin.end();
 await new Promise((r) => ff.on('close', r));

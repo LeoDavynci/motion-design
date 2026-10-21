@@ -18,5 +18,7 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
 - `make_cut.sh`: renders the hook, renders the main film's problem shot (2.6s-4.6s) from a temporary copy with the
   opening dot-field shot switched off, and joins them with a 0.4s crossfade. `../index.html` itself is never changed.
 
-**Render:** `cd hook-150 && node ../render.mjs --fps 60 --dur 17.6 --sub 8` (hook only), or `zsh hook-150/make_cut.sh`
-(hook into the main film). Output goes to `hook-150/out/` (ignored by git). No sound yet.
+**Render:** `zsh hook-150/make_cut.sh` renders the hook into the main film as a quick draft (30fps, 2 sub-frames,
+~2 min); `zsh hook-150/make_cut.sh final` renders the full-quality version (60fps, 8 sub-frames of motion blur,
+~15 min). Hook only: `cd hook-150 && node ../render.mjs --fps 60 --dur 17.6 --sub 8`. Output goes to `hook-150/out/`
+(ignored by git). No sound yet.
