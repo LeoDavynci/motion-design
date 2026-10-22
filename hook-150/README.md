@@ -28,6 +28,8 @@ prototype screens 2.3-2.5 "Add person / Create profile" (`create.html`). The typ
 screen recording reference (letters fade and sharpen in, the caret jumps after each one, the line re-centers).
 
 **Files**
+- `peepl-film-draft.mp4`: the current draft render (30fps, with sound), shared in the repo like the main film's
+  `out/final_v17.mp4`. Re-render with `make_cut.sh`.
 - `index.html`: the hook, `window.seek(t)` like the main film (same render contract, uses `../lib/motion.js`).
 - `intro.html`: "Introducing Peepl" (same contract). Its two backgrounds (the scene's, and the pale one around the
   phone) are drawn once into `assets/intro/bg.png` and `assets/phone/pale.png` by `make_intro_bg.mjs` from the Figma
