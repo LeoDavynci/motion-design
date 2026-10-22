@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Peepl film: find someone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+  /* Keyframes from Figma "Video Edits" 450:10511 ("I want to find", 200px, in a search box so big it fills the frame),
+     452:10657 (the box shrinks to a band, the whole query at 100px), 452:10683 (the box whole: the phone's search bar
+     at 4.55x) and 452:10693 (the phone: "6.2a Find someone / Text input - Query entered"). The zooms follow the user's
+     reference recording (typing in a huge field, then the camera pulls back to the field and its surroundings). After
+     the phone: the same flow as the main film's "Ask your own notes" (send, the recorded results, the "Why Jordan" note). */
+  :root { --ink: #16121c; --muted: #5b5361; --lime: #c6f04a; --caret: rgba(22, 18, 28, 0.45); --shadow: 0 8px 32px rgba(22, 18, 28, 0.07); }
+  html, body { margin: 0; background: #fff; }
+  #c { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #f4f4f4; font-family: 'Geist', 'Helvetica Neue', Arial, sans-serif; }
+  .flat { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+
+  /* The search box while it fills the frame (the phone's search bar, much bigger) */
+  #bigbox { position: absolute; left: 0; top: 0; box-sizing: border-box; border-style: solid; border-color: #fff;
+    background: rgba(255, 255, 255, 0.85); }
+  #bigsend { position: absolute; border-radius: 50%; background: #1c1522; }
+  #bigsend img { position: absolute; left: 20%; top: 20%; width: 60%; height: 60%; }
+  #text { position: absolute; inset: 0; }
+  .line { position: absolute; left: 0; top: 0; white-space: pre; transform-origin: 0 0;
+    font: 400 100px/0.9 'Geist', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -0.04em; color: var(--muted); }
+  .line span { white-space: pre; }
+  .caret { position: absolute; top: -0.06em; width: 0.025em; height: 1.02em; background: var(--caret); }
+  /* The typed query once typing is done, while it settles into the box (a stand-in for the typed line) */
+  #query { position: absolute; left: 0; top: 0; margin: 0; white-space: nowrap; transform-origin: 0 50%;
+    font: 400 100px/1 'Geist', 'Helvetica Neue', Arial, sans-serif; color: var(--muted); }
+
+  /* The phone (as in the other phone shots) */
+  #cam { position: absolute; left: 0; top: 0; width: 393px; height: 852px; transform-origin: 0 0; }
+  #device { position: absolute; left: -15.7px; top: -15.7px; right: -15.7px; bottom: -15.7px; border-radius: 70.7px;
+    background: linear-gradient(135deg, #6a6b70 0%, #2b2c30 22%, #4a4b50 48%, #222326 74%, #55565b 100%);
+    box-shadow: inset 0 0 0 0.8px rgba(255, 255, 255, 0.28), 0 0 0 0.6px rgba(0, 0, 0, 0.55),
+      0 46px 90px -16px rgba(8, 4, 14, 0.42), 0 14px 30px -10px rgba(8, 4, 14, 0.25); }
+  #device i { position: absolute; inset: 4.7px; border-radius: 66px; background: #07060a; box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.08); }
+  .btn { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #1d1e21, #5a5b60 55%, #2a2b2f); }
+  #screen { position: absolute; left: 0; top: 0; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; }
+  #glare { position: absolute; inset: 0; border-radius: 55px;
+    background: linear-gradient(118deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 28%, rgba(255, 255, 255, 0) 42%); }
+  #island { position: absolute; left: 133.5px; top: 11px; width: 126px; height: 37px; border-radius: 19px; background: #000; }
+  /* The screen's content in the Figma frame's px (390 x 844 with its 2px border, cropped) */
+  #content { position: absolute; left: 0; top: 0; width: 390px; height: 844px; transform-origin: 0 0; }
+  #screenimg { position: absolute; left: 0; top: 0; width: 390px; height: 844px; display: block; }
+  #patch { position: absolute; left: 15px; top: 713px; width: 360px; height: 99px; border-radius: 33px; background: #fcfbfa; }
+  /* The prototype's search bar ("Texting"): 358 wide, the query, the send button */
+  #box { position: absolute; left: 16px; top: 715px; width: 358px; height: 95.5px; box-sizing: border-box; border: 1px solid #fff;
+    border-radius: 32px; background: rgba(255, 255, 255, 0.85); box-shadow: var(--shadow); }
+  #box p { position: absolute; left: 12px; top: 12px; margin: 0; font-size: 15px; line-height: 1.3; color: var(--muted); white-space: nowrap; }
+  #send { position: absolute; right: 8px; bottom: 8px; width: 40px; height: 40px; border-radius: 20px; background: #1c1522; }
+  #send img { position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; }
+  /* The recorded results (the main film's assets/figma/v14/ask_seq, 2x) with the status bar drawn over them */
+  #seq { position: absolute; left: 0; top: 0; width: 393px; height: 852px; opacity: 0; }
+  #sb { position: absolute; inset: 0; opacity: 0; }
+  #sb .time { position: absolute; left: 34px; top: 16px; font-weight: 600; font-size: 16px; color: var(--ink); }
+  #sb img { position: absolute; right: 30px; top: 21px; width: 66px; height: 12px; }
+
+  /* "Why Jordan": the main film's callout (dark card, lime label, a lime leader to the card it describes) */
+  #callout { position: absolute; left: 0; top: 0; width: 380px; box-sizing: border-box; padding: 26px 28px 30px; border-radius: 26px;
+    background: var(--ink); box-shadow: 0 18px 50px rgba(8, 4, 14, 0.22); opacity: 0; }
+  #callout b { display: block; font: 500 18px 'Geist Mono', ui-monospace, monospace; letter-spacing: 2.4px; color: var(--lime); }
+  #callout p { margin: 20px 0 0; font-weight: 300; font-size: 26px; line-height: 34px; letter-spacing: -0.4px; color: #fff; }
+  #leader { position: absolute; inset: 0; overflow: visible; }
+
+  #thumb, .ripple { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; }
+  #thumb { width: 40px; height: 40px; margin: -20px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 5px 16px rgba(10, 6, 20, 0.32); }
+  .ripple { box-sizing: border-box; }
+  #r1 { border: 5px solid rgba(255, 255, 255, 0.9); }
+  #r2 { border: 2.5px solid rgba(22, 18, 28, 0.18); }
+</style>
+</head>
+<body>
+<div id="c">
+  <img class="flat" src="assets/phone/pale.png" alt="">
+  <div id="bigbox"><div id="bigsend"><img src="assets/find/send.svg" alt=""></div></div>
+  <div id="text"></div>
+  <p id="query">I want to find someone to go climbing with me</p>
+  <div id="cam">
+    <div class="btn" style="left:-19.2px;top:123.5px;height:27.3px"></div>
+    <div class="btn" style="left:-19.2px;top:183.2px;height:56.2px"></div>
+    <div class="btn" style="left:-19.2px;top:255.6px;height:56.2px"></div>
+    <div class="btn" style="right:-19.2px;top:213.0px;height:85.2px"></div>
+    <div id="device"><i></i></div>
+    <div id="screen">
+      <div id="content">
+        <img id="screenimg" src="assets/find/phone-search.png" alt="">
+        <div id="patch"></div>
+        <div id="box"><p>I want to find someone to go climbing with me</p><div id="send"><img src="assets/find/send.svg" alt=""></div></div>
+      </div>
+      <canvas id="seq" width="786" height="1704"></canvas>
+      <div id="sb"><div class="time">9:41</div><img src="assets/phone/status-icons.svg" alt=""></div>
+      <div id="island"></div>
+      <div id="glare"></div>
+    </div>
+  </div>
+  <svg id="leader" width="1920" height="1080"><line id="lline" stroke="#c6f04a" stroke-width="3" stroke-linecap="round"/>
+    <circle id="ldot" r="8" fill="#c6f04a" stroke="rgba(22,18,28,0.55)" stroke-width="2"/></svg>
+  <div id="callout"><b>WHY JORDAN</b><p>Climbs Tuesdays and wants a climbing buddy.</p></div>
+  <div class="ripple" id="r1"></div>
+  <div class="ripple" id="r2"></div>
+  <div id="thumb"></div>
+</div>
+<script type="module">
+import { clamp, spring } from '../lib/motion.js';
+import { makeLines, cutAfter, snapEase, smooth, easeOut } from './typing.js';
+
+const smoother = (x) => x * x * x * (x * (6 * x - 15) + 10);
+const lerp = (a, b, x) => a + (b - a) * x;
+const towards = (a, b, x) => a * (b / a) ** x;
+
+// ---- Script ----
+// 1. The light background; the search box fills the frame. "I want to find" is typed at 200px in the middle (450:10511)
+// 2. A cut-zoom between keystrokes: 100px, the box shrinks to a band, typing carries on: "someone to go climbing with
+//    me", the line staying centered (452:10657)
+// 3. The camera pulls back: the box shows whole, the query settles into it, the send button comes in (452:10683)
+// 4. It pulls back again to the phone, "Search for someone by..." around the box (452:10693)
+// 5. As in the main film: a tap on send, the recorded results come in (the query moves up, "Reading your notes...",
+//    Jordan Lee and Zara Ahmed), and the "Why Jordan" note points at Jordan's card
+const A = { start: 1.0, every: 0.065 };                       // "I want to find": 14 keys
+const { zoom: CUT, next: B_AT } = cutAfter(A.start + 13 * A.every, A.every);
+const B = { start: B_AT, every: 0.055 };                      // " someone to go climbing with me": 31 keys
+const TYPED = B.start + 30 * B.every;
+const SETTLE = [TYPED + 0.5, 1.1];                            // into the box whole (start, length)
+const PULL = [SETTLE[0] + SETTLE[1] + 0.35, 1.5];             // back to the phone
+const TAP = PULL[0] + PULL[1] + 0.6, SEND = TAP + 0.1;
+const SEQ_N = 65, SEQ_FPS = 12;                               // the recorded results: 5.4s
+const NOTE = [SEND + 3.6, 170, 18];                           // the "Why Jordan" note (as in the main film: 3.6s after send)
+const DURATION = SEND + SEQ_N / SEQ_FPS + 0.8;
+
+const LINES = [{
+  parts: [
+    { text: 'I want to find', start: A.start, every: A.every },
+    { text: ' someone to go climbing with me', start: B.start, every: B.every },
+  ],
+  caretFrom: A.start - 0.25, clearAt: SETTLE[0],
+  scale: (t) => 2 - snapEase(clamp((t - CUT[0]) / (CUT[1] - CUT[0]))),
+  beats: [CUT],
+}];
+const { lines, measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
+
+// ---- Geometry ----
+// The box in the Figma frames (px in the frame): filling it at 200px, a band at 100px, whole at 4.55x
+const BOX1 = { cx: 886.5, top: -68, w: 2327, h: 1173, r: 208, b: 6.5 };
+const BOX2 = { cx: 959.5, top: 392, w: 2327, h: 609, r: 208, b: 6.5 };
+const BOX3 = { cx: 146 + 1628.9 / 2, top: 446, w: 1628.9, h: 95.5 * 4.55, r: 32 * 4.55, b: 4.55 };
+// The phone: content in the Figma frame's px (390 x 844, 2px border cropped), shown at s = 393 / 386
+const S = 393 / 386;
+const PBOX = { x: 16, y: 715 };                               // the search bar's top-left in the phone frame
+const K0 = 4.55 / S;                                          // the phone at which its search bar is BOX3
+const T1 = { x: 763.5, y: 114 };
+const camAt = (K, anchorScreen) => ({ x: anchorScreen.x - (PBOX.x - 2) * S * K, y: anchorScreen.y - (PBOX.y - 2) * S * K });
+const SENDC = { x: 16 + 358 - 9 - 20, y: 715 + 95.5 - 9 - 20 }; // the send button's center (phone frame px)
+
+// ---- Build ----
+const $ = (id) => document.getElementById(id);
+const bigbox = $('bigbox'), bigsend = $('bigsend'), query = $('query'), cam = $('cam'), content = $('content');
+const seq = $('seq'), sctx = seq.getContext('2d'), sb = $('sb'), callout = $('callout'), lline = $('lline'), ldot = $('ldot');
+const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2'), send = $('send');
+const phoneBits = ['device', 'screenimg', 'patch', 'island', 'glare'].map($).concat([...document.querySelectorAll('.btn')]);
+content.style.transform = `translate(${-2 * S}px, ${-2 * S}px) scale(${S})`;
+const frames = [];
+let roleFont = 26;
+
+// ---- Paint frame t ----
+window.seek = (t) => {
+  paint(t);
+  // The box: fills the frame, then (with the cut) a band, then (settling) whole
+  const cz = snapEase(clamp((t - CUT[0]) / (CUT[1] - CUT[0])));
+  const st = smoother(clamp((t - SETTLE[0]) / SETTLE[1]));
+  const mix = (k) => lerp(lerp(BOX1[k], BOX2[k], cz), BOX3[k], st);
+  const bw = mix('w'), bh = mix('h');
+  Object.assign(bigbox.style, { left: `${mix('cx') - bw / 2}px`, top: `${mix('top')}px`, width: `${bw}px`, height: `${bh}px`,
+    borderRadius: `${mix('r')}px`, borderWidth: `${mix('b')}px`,
+    boxShadow: `0 ${(8 * 4.55 * (0.5 + 0.5 * st)).toFixed(1)}px ${(32 * 4.55).toFixed(1)}px rgba(22, 18, 28, 0.07)` });
+  const sendS = 40 * 4.55, inset = 9 * 4.55 - mix('b');   // the phone's send button: 8px in from the inside of its 1px border
+  Object.assign(bigsend.style, { width: `${sendS}px`, height: `${sendS}px`, right: `${inset}px`, bottom: `${inset}px`,
+    opacity: smooth(clamp((st - 0.35) / 0.5)).toFixed(3), transform: `scale(${(0.8 + 0.2 * smooth(clamp((st - 0.35) / 0.6))).toFixed(3)})` });
+
+  // Settling: the typed line hands over to a copy of it that moves into the box's text spot, its tracking easing from
+  // the big type's -0.04em to the box's 0, its size from 100px to the box's 68.25px
+  const L = lines[0];
+  L.el.style.visibility = t < SETTLE[0] ? '' : 'hidden';
+  query.style.display = t < SETTLE[0] ? 'none' : '';
+  if (t >= SETTLE[0]) {
+    query.style.letterSpacing = `${lerp(-4, 0, st).toFixed(3)}px`;
+    const w0 = query.scrollWidth;
+    const k = lerp(1, 0.6825, st);
+    const x0 = 960 - L.widths[L.chars.length] / 2 - 2, x1 = 146 + 13 * 4.55;
+    const y0 = 540, y1 = 446 + (12 + 1 + 9.75) * 4.55;
+    query.style.transform = `translate(${lerp(x0, x1, st).toFixed(2)}px, ${(lerp(y0, y1, st) - 50).toFixed(2)}px) scale(${k.toFixed(5)})`;
+    void w0;
+  }
+  // Once it's whole, the phone takes over (its search bar is exactly where the box is)
+  const onPhone = t >= SETTLE[0] + SETTLE[1];
+  bigbox.style.display = onPhone ? 'none' : '';
+  if (onPhone) query.style.display = 'none';
+  cam.style.display = onPhone ? '' : 'none';
+
+  // The camera pulls back to the phone; its screen comes up around the search bar
+  const e = smoother(clamp((t - PULL[0]) / PULL[1]));
+  const K = towards(K0, 1, e);
+  const a0 = { x: BOX3.cx - BOX3.w / 2, y: BOX3.top }, a1 = { x: T1.x + (PBOX.x - 2) * S, y: T1.y + (PBOX.y - 2) * S };
+  const camT = camAt(K, { x: lerp(a0.x, a1.x, e), y: lerp(a0.y, a1.y, e) });
+  cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${camT.y.toFixed(3)}px) scale(${K.toFixed(5)})`;
+  const phone = smooth(clamp((e - 0.08) / 0.55)).toFixed(3);
+  phoneBits.forEach((el) => { el.style.opacity = phone; });
+
+  // Tap send: the thumb glides in and presses; the recorded results crossfade in (as in the main film)
+  const u = t - TAP, press = clamp(u / 0.1) * (1 - clamp((u - 0.22) / 0.22));
+  const sx = camT.x + (SENDC.x - 2) * S * K, sy = camT.y + (SENDC.y - 2) * S * K;
+  const gl = easeOut(clamp((u + 0.9) / 0.9)), fade = 1 - clamp((u - 0.12) / 0.2);
+  thumb.style.opacity = u > -0.9 && u < 0.4 ? fade.toFixed(3) : '0';
+  thumb.style.transform = `translate(${(sx + (1 - gl) * 150).toFixed(1)}px, ${(sy + (1 - gl) * 190).toFixed(1)}px) scale(${(1 - 0.2 * press).toFixed(3)})`;
+  const ring = easeOut(clamp(u / 0.4));
+  [[r1, 20], [r2, 22.4]].forEach(([el, base]) => {
+    const R = base + 60 * ring;
+    Object.assign(el.style, { width: `${2 * R}px`, height: `${2 * R}px`, opacity: u >= 0 && u < 0.4 ? (1 - ring).toFixed(3) : '0',
+      transform: `translate(${(sx - R).toFixed(1)}px, ${(sy - R).toFixed(1)}px)` });
+  });
+  send.style.transform = `scale(${(1 - 0.08 * press).toFixed(3)})`;
+  const sa = easeOut(clamp((t - SEND) / 0.2));
+  seq.style.opacity = sa.toFixed(3); sb.style.opacity = sa.toFixed(3);
+  if (t >= SEND) {
+    const i = clamp(Math.floor((t - SEND) * SEQ_FPS), 0, SEQ_N - 1);
+    sctx.drawImage(frames[i], 0, 0, 786, 1704);
+    // Jordan's card in the recording still says "Founder @ [Startup]": the line is redrawn with Peepl (from frame 20,
+    // when the results are in, at the same place in every frame)
+    if (i >= 20) {
+      sctx.fillStyle = '#f9fafc'; sctx.fillRect(166, 539, 350, 33);
+      sctx.font = `400 ${roleFont.toFixed(2)}px Geist`; sctx.fillStyle = '#625b69'; sctx.textBaseline = 'alphabetic';
+      sctx.fillText('Founder @ Peepl · Brooklyn', 172, 563);
+    }
+  }
+
+  // "Why Jordan" (the main film's calloutAt): slides in from the right, its lime leader reaching Jordan's card
+  const ce = spring(t - NOTE[0], NOTE[1], NOTE[2]);
+  const cx = 1430 + (1 - ce) * 460, cy = 270 + (1 - ce) * 40, ch = callout.offsetHeight;
+  callout.style.opacity = t >= NOTE[0] - 0.01 ? '1' : '0';
+  callout.style.transform = `translate(${cx.toFixed(1)}px, ${cy.toFixed(1)}px)`;
+  const lp = smooth(clamp((t - NOTE[0] - 0.15) / 0.4));
+  const tgt = { x: T1.x + 215 * 393 / 390, y: T1.y + 270 * 852 / 844 };
+  const x0 = cx, y0 = cy + ch / 2, lx = lerp(x0, tgt.x, lp), ly = lerp(y0, tgt.y, lp);
+  lline.setAttribute('x1', x0); lline.setAttribute('y1', y0); lline.setAttribute('x2', lx); lline.setAttribute('y2', ly);
+  lline.style.opacity = ldot.style.opacity = lp > 0 ? '1' : '0';
+  ldot.setAttribute('cx', lx); ldot.setAttribute('cy', ly);
+};
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  await document.fonts.load("400 100px 'Geist'");
+  await document.fonts.load("300 26px 'Geist'");
+  await document.fonts.load("600 16px 'Geist'");
+  await document.fonts.load("500 18px 'Geist Mono'");
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((im) => im.decode().catch(() => {})));
+  await Promise.all(Array.from({ length: SEQ_N }, async (_, i) => {
+    const im = new Image(); im.src = `../assets/figma/v14/ask_seq/f${String(i).padStart(3, '0')}.png`; await im.decode(); frames[i] = im;
+  }));
+  // The replacement line at the recording's type size: "Founder @ [Startup] · Brooklyn" spans 333px there (2x)
+  sctx.font = "400 26px Geist"; roleFont = 26 * 333 / sctx.measureText('Founder @ [Startup] · Brooklyn').width;
+  measure();
+  window.seek(0);
+})();
+if (new URLSearchParams(location.search).has('play')) {
+  window.ready.then(() => {
+    const t0 = performance.now();
+    const loop = (now) => { window.seek(((now - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>

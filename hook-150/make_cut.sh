@@ -15,7 +15,9 @@
 #      is the other one), 0.8s crossfade once "Not just their name." has faded out. Halfway through the memory it pulls
 #      back to the phone, "Play it back." fades in either side, then they leave.
 #   7. Vince's "Ask your own notes." and its three prompts (v17, temporary copy: prompts after the headline, smoother
-#      highlight, a beat, then it all fades out), 0.8s crossfade in. The cut ends there for now.
+#      highlight, a beat, then it all fades out), 0.8s crossfade in.
+#   8. Find someone (find.html): "I want to find someone to go climbing with me" typed in a search box that fills the frame,
+#      pulled back to the box, then to the phone; send, the recorded results, "Why Jordan". 0.8s crossfade in.
 # The "Meeting people is easy" shot stays the one from his first version (commit 964dee0), which this cut was timed on.
 # Run from anywhere:  zsh ~/motion-design/hook-150/make_cut.sh [draft|final]
 #   draft (default): 30fps, 2 sub-frames of motion blur. For checking timing while iterating.
@@ -38,6 +40,7 @@ HOOK_DUR=$(dur hook-150/index.html)
 INTRO_DUR=$(dur hook-150/intro.html)
 CREATE_DUR=$(dur hook-150/create.html)
 MOMENT_DUR=$(dur hook-150/moment.html v=card)
+FIND_DUR=$(dur hook-150/find.html)
 echo "hook: ${HOOK_DUR}s, intro: ${INTRO_DUR}s, create: ${CREATE_DUR}s"
 mkdir -p hook-150/out
 node hook-150/render_segment.mjs --page hook-150/index.html --from 0 --to "$HOOK_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/silent.mp4
@@ -78,11 +81,13 @@ RANGE=$(node -e "import('playwright').then(async({chromium})=>{const b=await chr
 AFROM=${RANGE% *}; ATO=${RANGE#* }
 node hook-150/render_segment.mjs --page "$TMP" --from "$AFROM" --to "$ATO" --fps "$FPS" --sub "$SUB" --out hook-150/out/ask.mp4
 rm -f "$TMP"
+node hook-150/render_segment.mjs --page hook-150/find.html --from 0 --to "$FIND_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/find.mp4
 STORY_DUR=$(node -e "console.log((${STO} - ${SFROM} + ${HOLD}).toFixed(3))")
 O5=$(node -e "console.log((${O4} + ${STORY_DUR} - ${STORY}).toFixed(3))")
 O6=$(node -e "console.log((${O5} + ${MOMENT_DUR} - ${STORY}).toFixed(3))")
-ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 -i hook-150/out/moment.mp4 -i hook-150/out/ask.mp4 \
-    -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4}[d];[d][5:v]xfade=transition=fade:duration=${STORY}:offset=${O5}[e];[e][6:v]xfade=transition=fade:duration=${STORY}:offset=${O6},format=yuv420p[v]" \
+O7=$(node -e "console.log((${O6} + ${ATO} - ${AFROM} - ${STORY}).toFixed(3))")
+ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 -i hook-150/out/moment.mp4 -i hook-150/out/ask.mp4 -i hook-150/out/find.mp4 \
+    -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4}[d];[d][5:v]xfade=transition=fade:duration=${STORY}:offset=${O5}[e];[e][6:v]xfade=transition=fade:duration=${STORY}:offset=${O6}[f];[f][7:v]xfade=transition=fade:duration=${STORY}:offset=${O7},format=yuv420p[v]" \
     -map "[v]" -c:v libx264 -crf 16 -r "$FPS" hook-150/out/peepl-film-draft.mp4
 cp hook-150/out/silent.mp4 hook-150/out/peepl-hook-150.mp4
 echo done
