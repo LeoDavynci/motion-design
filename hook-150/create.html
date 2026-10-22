@@ -185,7 +185,7 @@ const LINES = [{
   parts: [{ text: 'Speak into the mic', start: SPEAK.start, every: SPEAK.every }],
   caretFrom: SPEAK.start - 0.25, clearAt: TEXT_OUT, slideOut: true,
 }];
-const { measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
+const { lines, measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
 
 // ---- The camera ----
 // The box is 3.6x the prototype's in Figma 430:8217 (left 316, top 322). At K0 the camera puts the phone's box exactly
@@ -332,6 +332,8 @@ window.seek = (t) => {
   made.style.transform = `scale(${(0.96 + 0.04 * mp).toFixed(4)})`;
 };
 window.DURATION = DURATION;
+window.CUES = { wave: WAVE.start, morph: MORPH[0], pull: PULL[0], tap: TAP, made: MADE, leave: LEAVE[0] };   // beats for the music (sound.py)
+window.KEYS = lines.flatMap((L) => L.chars.map((c) => c.at));   // typed keys, for the keyboard sounds (sound.py)
 
 window.ready = (async () => {
   await document.fonts.load("400 100px 'Geist'");

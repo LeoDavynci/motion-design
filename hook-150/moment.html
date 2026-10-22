@@ -274,6 +274,7 @@ window.seek = (t) => {
   });
 };
 window.DURATION = DURATION;
+window.CUES = { pop: POP, widen: (T.widen || T.open)[0], open: T.open[0], tap: TAP, pull: PULL[0], say: SAY, out: OUT };   // beats for the music (sound.py)
 
 if (q.has('bg')) $('c').classList.add('bake-bg');
 window.ready = (async () => {

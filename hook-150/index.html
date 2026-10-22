@@ -78,7 +78,7 @@ const LINES = [
     ],
     caretFrom: 11.05, clearAt: REST_CLEAR, slideOut: true,
     scale: (t) => 1 + (ZOOM_K - 1) * snapEase(clamp((t - ZOOM[0]) / (ZOOM[1] - ZOOM[0]))),
-    beats: [ZOOM], zoomTo: { k: ZOOM_K, left: ZOOM_LEFT } },
+    beats: [ZOOM], zoomTo: { k: ZOOM_K, left: ZOOM_LEFT, anchor: 0.45 } },  // the cut keeps the caret in place (smooth, user's call)
 ];
 // The last line leaves by sliding off to the left while it fades (typing.js)
 const SLIDE = { dist: 1500, dur: 0.75 };
@@ -90,7 +90,7 @@ const DOTS_OUT = [REST_CLEAR + SLIDE.dur - 0.15, 0.8]; // ~20% quicker than it w
 const DURATION = DOTS_OUT[0] + DOTS_OUT[1] + 0.15 + 0.25;
 
 // ---- Build ----
-const { measure, paint } = makeLines(document.getElementById('text'), LINES, { slide: SLIDE });
+const { lines, measure, paint } = makeLines(document.getElementById('text'), LINES, { slide: SLIDE });
 
 // Dots: one element each, centered on its position; delay = distance from the text's middle (960, 540)
 const dotLayer = document.getElementById('dots');
@@ -146,6 +146,8 @@ window.seek = (t) => {
   });
 };
 window.DURATION = DURATION;
+window.CUES = { snap: SNAP[0], restZoom: ZOOM[0], white: WHITE_IN[0], out: DOTS_OUT[0] };   // beats for the music (sound.py)
+window.KEYS = lines.flatMap((L) => L.chars.map((c) => c.at));   // typed keys, for the keyboard sounds (sound.py)
 
 window.ready = (async () => {
   await document.fonts.load("400 100px 'Geist'");

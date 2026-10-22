@@ -6,7 +6,9 @@
 //
 // A line: { parts: [{ text, start, every, lime, hl }], caretFrom, clearAt, slideOut?, scale?(t), beats?: [[t0, t1]],
 //           zoomTo?: { k, left } }  — zoomTo: at scale k the finished line's left edge sits at `left` (screen px), as in
-//           the Figma frame; the pan grows with the scale so the zoom heads straight there.
+//           the Figma frame; the pan grows with the scale so the zoom heads straight there. With zoomTo.anchor (s), the
+//           zoom instead keeps the caret where it is on screen (no jump), and the framing eases in over the s seconds
+//           after it, while the rest of the line types.
 // A part with hl (a time) gets a highlight like the ones in Vince's film: a lime box that sweeps in left to right behind
 // the word (spring 220/24) at that time. o.hl = { top, height, pad: [left, right] } sizes it in the line's px (style it with .line .hl).
 import { clamp, track, spring } from '../lib/motion.js';
@@ -96,6 +98,16 @@ export function makeLines(stage, LINES, o = {}) {
         const W = L.widths[L.chars.length] + TRACK;
         const panEnd = L.zoomTo.left - 960 + (L.zoomTo.k * W) / 2;
         pan = (panEnd * (k - 1)) / (L.zoomTo.k - 1);
+        if (L.zoomTo.anchor && L.beats) {
+          // The caret's spot when the zoom starts stays put through it: pan = (off0 + pc) - k (off + pc)
+          const [z0, z1] = L.beats[0];
+          let nz = 0;
+          while (nz < L.chars.length && L.chars[nz].at <= z0) nz++;
+          const pc = L.widths[nz] + 4, off0 = track(z0, keys, 140, 24);
+          const hold = (tt) => off0 + pc - k * (track(Math.min(tt, z1), keys, 140, 24) + pc);
+          const g = smooth(clamp((t - z1) / L.zoomTo.anchor));
+          pan = t < z0 ? 0 : hold(t) + (panEnd - hold(t)) * g;
+        }
       }
       L.el.style.transform = `translate(${960 + pan + drift}px, 540px) scale(${k}) translate(${off}px, -50%)`;
       if (L.hl) L.hl.box.style.width = `${(L.hl.w * clamp(spring(t - L.hl.at, 220, 24), 0, 1.05)).toFixed(2)}px`;

@@ -211,7 +211,7 @@ const LINES = [{
   scale: (t) => 1 + snapEase(clamp((t - CUT[0]) / (CUT[1] - CUT[0]))),
   beats: [CUT], zoomTo: { k: 2, left: -261 },   // Frame 22: "Introducing Peepl" at 200px, left edge at -261px
 }];
-const { measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
+const { lines, measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
 
 // ---- Discs ----
 // The gathered cluster, from Figma Frame 26: center x, y, disc size, dot size. JORDAN is the middle one (the "JL" disc
@@ -364,6 +364,8 @@ window.seek = (t) => {
   scrim.style.opacity = (0.3 * clamp(sheet)).toFixed(3);
 };
 window.DURATION = DURATION;
+window.CUES = { cut: CUT[0], hl: HL_AT, gather: GATHER[0], zoom: ZOOM[0], initials: INITIALS_AT, out: OUT[0], tap: TAP, gone: GONE[0] };   // beats for the music (sound.py)
+window.KEYS = lines.flatMap((L) => L.chars.map((c) => c.at));   // typed keys, for the keyboard sounds (sound.py)
 window.PHONE_AT = OUT[1];   // the phone fully in view (make_end_assets.mjs takes its screen from here)
 
 const q = new URLSearchParams(location.search);

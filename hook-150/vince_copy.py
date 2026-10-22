@@ -17,7 +17,7 @@
 #            night background is already there (the cut crossfades into it).
 #   end:     v17, only the last scene ("Peepl. Capture. Search. Reconnect." and the phone): the phone shows the updated
 #            mindmap (our intro's phone screen, assets/end/home_jl.png: the new discs and controls, "JL" for Jordan Lee;
-#            his showed an older screen with "MC"), and his night background is already there (the cut crossfades into it).
+#            his showed an older screen with "MC"), no cursor on it, and his night background is already there (the cut crossfades into it).
 #   bg:      v17 with no shots at all: just his backgrounds (to draw the last scene's night background into a still).
 #   story, ask, end: a highlighted word's text turns from white to ink smoothly as the lime box sweeps under it (it
 #            switched at once, which looked rough).
@@ -78,6 +78,8 @@ elif mode == 'ask':
     rep("const TOTAL = SEG.reduce(", "SHOTS.splice(0, SHOTS.length, ...SHOTS.filter((x) => x[2] === ask));\nconst TOTAL = SEG.reduce(")
 elif mode == 'end':
     rep("home_in: 'v14/home_zoomed_in'", "home_in: '../../hook-150/assets/end/home_jl'")
+    # No cursor on the phone in the last scene (user's call)
+    rep("rot: -4, taps: [[28.6, 0.54, 0.55]] });", "rot: -4, taps: [] });")
     rep("[BGT.end - 0.4, 'nA', 'diag']", "[BGT.end - 1.6, 'nA', 'fade']")
     rep("const TOTAL = SEG.reduce(", "SHOTS.splice(0, SHOTS.length, ...SHOTS.filter((x) => x[2] === end));\nconst TOTAL = SEG.reduce(")
 elif mode == 'bg':

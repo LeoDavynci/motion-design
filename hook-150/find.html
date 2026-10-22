@@ -19,7 +19,7 @@
 
   /* The search box while it fills the frame (the phone's search bar, much bigger) */
   #bigbox { position: absolute; left: 0; top: 0; box-sizing: border-box; border-style: solid; border-color: #fff;
-    background: rgba(255, 255, 255, 0.85); }
+    background: #fcfbfa; }   /* solid on the night background: the phone's bar, as it looks on its light screen */
   #bigsend { position: absolute; border-radius: 50%; background: #1c1522; }
   #bigsend img { position: absolute; left: 20%; top: 20%; width: 60%; height: 60%; }
   #text { position: absolute; inset: 0; }
@@ -28,7 +28,9 @@
   .line span { white-space: pre; }
   .caret { position: absolute; top: -0.06em; width: 0.025em; height: 1.02em; background: var(--caret); }
   /* The typed query once typing is done, while it settles into the box (a stand-in for the typed line) */
-  #query { position: absolute; left: 0; top: 0; margin: 0; white-space: nowrap; transform-origin: 0 50%;
+  #query span { opacity: 0; }
+  #query i { display: inline-block; width: 0.025em; height: 1.02em; margin: 0 0 -0.2em 4px; background: var(--caret); }
+  #query { position: absolute; left: 0; top: 0; margin: 0; white-space: pre; transform-origin: 0 50%;
     font: 400 100px/1 'Geist', 'Helvetica Neue', Arial, sans-serif; color: var(--muted); }
 
   /* The phone (as in the other phone shots) */
@@ -78,11 +80,10 @@
 </head>
 <body>
 <div id="c">
-  <img class="flat" src="assets/phone/pale.png" alt="">
-  <img class="flat" id="dark" src="assets/find/dark.png" alt="">
+  <img class="flat" src="assets/find/dark.png" alt="">
   <div id="bigbox"><div id="bigsend"><img src="assets/find/send.svg" alt=""></div></div>
   <div id="text"></div>
-  <p id="query">I want to find someone to go climbing with me</p>
+  <p id="query"></p>
   <div id="cam">
     <div class="btn" style="left:-19.2px;top:123.5px;height:27.3px"></div>
     <div class="btn" style="left:-19.2px;top:183.2px;height:56.2px"></div>
@@ -131,7 +132,9 @@ const A = { start: 1.0, every: 0.065 };                       // "I want to find
 const { zoom: CUT, next: B_AT } = cutAfter(A.start + 13 * A.every, A.every);
 const B = { start: B_AT, every: 0.055 };                      // " someone to go climbing with me": 31 keys
 const TYPED = B.start + 30 * B.every;
-const SETTLE = [TYPED + 0.5, 1.1];                            // into the box whole (start, length)
+// Into the box whole, starting while the last word is still being typed (before the line runs off the edges)
+const SPLIT = 37;                                             // "I want to find someone to go climbing" typed
+const SETTLE = [B.start + (SPLIT - 14) * B.every, 1.1];       // (start, length)
 const PULL = [SETTLE[0] + SETTLE[1] + 0.35, 1.5];             // back to the phone
 const TAP = PULL[0] + PULL[1] + 0.6, SEND = TAP + 0.1;
 const SEQ_N = 65, SEQ_FPS = 12;                               // the recorded results: 5.4s
@@ -167,7 +170,11 @@ const SENDC = { x: 16 + 358 - 9 - 20, y: 715 + 95.5 - 9 - 20 }; // the send butt
 const $ = (id) => document.getElementById(id);
 const bigbox = $('bigbox'), bigsend = $('bigsend'), query = $('query'), cam = $('cam'), content = $('content');
 const seq = $('seq'), sctx = seq.getContext('2d'), sb = $('sb'), callout = $('callout'), lline = $('lline'), ldot = $('ldot');
-const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2'), send = $('send'), dark = $('dark');
+const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2'), send = $('send');
+// The query's copy for settling into the box: each letter with its typing time (as the typed line), a caret after them
+const QCH = LINES[0].parts.flatMap((p) => [...p.text].map((ch, i) => ({ ch, at: p.start + i * p.every })));
+const qspans = QCH.map(({ ch }) => { const sp = document.createElement('span'); sp.textContent = ch; query.appendChild(sp); return sp; });
+const qcaret = document.createElement('i'); query.appendChild(qcaret);
 content.style.transform = `translate(${-2 * S}px, ${-2 * S}px) scale(${S})`;
 const frames = [];
 let roleFont = 26;
@@ -188,18 +195,20 @@ window.seek = (t) => {
     opacity: smooth(clamp((st - 0.35) / 0.5)).toFixed(3), transform: `scale(${(0.8 + 0.2 * smooth(clamp((st - 0.35) / 0.6))).toFixed(3)})` });
 
   // Settling: the typed line hands over to a copy of it that moves into the box's text spot, its tracking easing from
-  // the big type's -0.04em to the box's 0, its size from 100px to the box's 68.25px
+  // the big type's -0.04em to the box's 0, its size from 100px to the box's 68.25px; the last word keeps typing in it
   const L = lines[0];
   L.el.style.visibility = t < SETTLE[0] ? '' : 'hidden';
   query.style.display = t < SETTLE[0] ? 'none' : '';
   if (t >= SETTLE[0]) {
+    let n = 0;
+    QCH.forEach(({ at }, i) => { const a = clamp((t - at) / 0.09); if (a > 0) n = i + 1; qspans[i].style.opacity = easeOut(a).toFixed(3); });
+    query.insertBefore(qcaret, qspans[n] || null);
+    qcaret.style.opacity = t < QCH[QCH.length - 1].at + 0.2 ? '1' : '0';
     query.style.letterSpacing = `${lerp(-4, 0, st).toFixed(3)}px`;
-    const w0 = query.scrollWidth;
     const k = lerp(1, 0.6825, st);
-    const x0 = 960 - L.widths[L.chars.length] / 2 - 2, x1 = 146 + 13 * 4.55;
+    const x0 = L.spans[0].getBoundingClientRect().left, x1 = 146 + 13 * 4.55;   // where the (hidden) typed line is now
     const y0 = 540, y1 = 446 + (12 + 1 + 9.75) * 4.55;
     query.style.transform = `translate(${lerp(x0, x1, st).toFixed(2)}px, ${(lerp(y0, y1, st) - 50).toFixed(2)}px) scale(${k.toFixed(5)})`;
-    void w0;
   }
   // Once it's whole, the phone takes over (its search bar is exactly where the box is)
   const onPhone = t >= SETTLE[0] + SETTLE[1];
@@ -221,8 +230,7 @@ window.seek = (t) => {
   const rv = smoother(clamp(e / 0.55));
   const ins = [lerp(725.9, -26, rv), lerp(14.3, -26, rv), lerp(28.8, -26, rv), lerp(14.25, -26, rv)];
   cam.style.clipPath = rv >= 1 ? '' : `inset(${ins.map((v) => v.toFixed(2) + 'px').join(' ')} round ${lerp(32.6, 80, rv).toFixed(2)}px)`;
-  // the background turns to the night one as it pulls back
-  dark.style.opacity = smooth(clamp((e - 0.05) / 0.6)).toFixed(3);
+
 
   // Tap send: the thumb glides in and presses; the recorded results crossfade in (as in the main film)
   const u = t - TAP, press = clamp(u / 0.1) * (1 - clamp((u - 0.22) / 0.22));
@@ -265,6 +273,9 @@ window.seek = (t) => {
   ldot.setAttribute('cx', lx); ldot.setAttribute('cy', ly);
 };
 window.DURATION = DURATION;
+window.CUES = { cut: CUT[0], settle: SETTLE[0], pull: PULL[0], tap: TAP, note: NOTE[0], leave: LEAVE };   // beats for the music (sound.py)
+window.KEYS = lines.flatMap((L) => L.chars.map((c) => c.at));   // typed keys, for the keyboard sounds (sound.py)
+window.RAMP = [SETTLE[0] + SETTLE[1], PULL[0]];   // the cut speeds the typing up and eases back to normal here, before the phone
 
 window.ready = (async () => {
   await document.fonts.load("400 100px 'Geist'");

@@ -39,6 +39,10 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
 - `create.html`: "Speak into the mic" to Jordan's new profile (same contract), assets in `assets/create/`.
 - `make_end_assets.mjs`: draws `assets/end/home_jl.png` (the intro's phone screen, for the main film's last scene) and
   `assets/find/dark.png` (its night background, for find.html).
+- `assemble.py`: joins the rendered shots (crossfades), maps typed keys and beats onto the film's clock
+  (`out/timeline.json`), runs `sound.py` and puts picture and sound together.
+- `sound.py`: the music (warm, 100 BPM; quiet in the hook and the memory, hits on the big moments) and a keyboard click
+  on every typed letter, synthesized with the main film's instruments.
 - `vince_copy.py`: the edits make_cut.sh makes to temporary copies of the main film to render its shots.
 - `typing.js`: the typed lines all three use (typing, caret, re-centering, cut-zooms, exits, Vince-style highlights).
 - `dots.js`: the colorful grid's dot positions and colors, from Figma Frame 17.
@@ -47,6 +51,9 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
 - `make_cut.sh`: renders the hook, the main film's problem shot (2.4s-5.5s at 65% speed, from a temporary copy with the opening
   dot-field shot switched off) and the intro, and joins them: a 0.4s crossfade, then a 0.6s soft wipe from the left.
   `../index.html` itself is never changed. `create.html` follows the intro with a 0.3s crossfade on the pale background.
+
+**Speeds:** everything at 1.4x, except "Speak into the mic" to the new profile and the phone part of the find flow (1x;
+its typing eases from 1.4x to 1x before the phone). `render_segment.mjs --speed / --speedmap`.
 
 **Render:** `zsh hook-150/make_cut.sh` renders the hook into the main film as a quick draft (30fps, 2 sub-frames,
 ~2 min); `zsh hook-150/make_cut.sh final` renders the full-quality version (60fps, 8 sub-frames of motion blur,
