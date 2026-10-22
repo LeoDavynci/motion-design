@@ -59,9 +59,12 @@
   #sb .time { position: absolute; left: 34px; top: 16px; font-weight: 600; font-size: 16px; color: var(--ink); }
   #sb img { position: absolute; right: 30px; top: 21px; width: 66px; height: 12px; }
 
-  /* "Why Jordan": the main film's callout (dark card, lime label, a lime leader to the card it describes) */
+  /* "Why Jordan": the main film's callout, glass on the night background (white 9%, a 2px white 22% edge, the blurred
+     background through it), lime label, a lime leader to the card it describes */
   #callout { position: absolute; left: 0; top: 0; width: 380px; box-sizing: border-box; padding: 26px 28px 30px; border-radius: 26px;
-    background: var(--ink); box-shadow: 0 18px 50px rgba(8, 4, 14, 0.22); opacity: 0; }
+    background: rgba(255, 255, 255, 0.09); border: 2px solid rgba(255, 255, 255, 0.22);
+    -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+    box-shadow: 0 18px 50px rgba(8, 4, 14, 0.22); opacity: 0; }
   #callout b { display: block; font: 500 18px 'Geist Mono', ui-monospace, monospace; letter-spacing: 2.4px; color: var(--lime); }
   #callout p { margin: 20px 0 0; font-weight: 300; font-size: 26px; line-height: 34px; letter-spacing: -0.4px; color: #fff; }
   #leader { position: absolute; inset: 0; overflow: visible; }
@@ -76,6 +79,7 @@
 <body>
 <div id="c">
   <img class="flat" src="assets/phone/pale.png" alt="">
+  <img class="flat" id="dark" src="assets/find/dark.png" alt="">
   <div id="bigbox"><div id="bigsend"><img src="assets/find/send.svg" alt=""></div></div>
   <div id="text"></div>
   <p id="query">I want to find someone to go climbing with me</p>
@@ -118,8 +122,11 @@ const towards = (a, b, x) => a * (b / a) ** x;
 //    me", the line staying centered (452:10657)
 // 3. The camera pulls back: the box shows whole, the query settles into it, the send button comes in (452:10683)
 // 4. It pulls back again to the phone, "Search for someone by..." around the box (452:10693)
+//    The phone's screen grows out from around the search bar (no see-through phone), and the background turns to the
+//    main film's night background, as in its last scene
 // 5. As in the main film: a tap on send, the recorded results come in (the query moves up, "Reading your notes...",
 //    Jordan Lee and Zara Ahmed), and the "Why Jordan" note points at Jordan's card
+// 6. The note slides away, the phone drops away fast, and the night background is left for the main film's last scene
 const A = { start: 1.0, every: 0.065 };                       // "I want to find": 14 keys
 const { zoom: CUT, next: B_AT } = cutAfter(A.start + 13 * A.every, A.every);
 const B = { start: B_AT, every: 0.055 };                      // " someone to go climbing with me": 31 keys
@@ -129,7 +136,8 @@ const PULL = [SETTLE[0] + SETTLE[1] + 0.35, 1.5];             // back to the pho
 const TAP = PULL[0] + PULL[1] + 0.6, SEND = TAP + 0.1;
 const SEQ_N = 65, SEQ_FPS = 12;                               // the recorded results: 5.4s
 const NOTE = [SEND + 3.6, 170, 18];                           // the "Why Jordan" note (as in the main film: 3.6s after send)
-const DURATION = SEND + SEQ_N / SEQ_FPS + 0.8;
+const LEAVE = NOTE[0] + 2.4;                                 // the note and the phone leave
+const DURATION = LEAVE + 0.35 + 0.9;
 
 const LINES = [{
   parts: [
@@ -159,8 +167,7 @@ const SENDC = { x: 16 + 358 - 9 - 20, y: 715 + 95.5 - 9 - 20 }; // the send butt
 const $ = (id) => document.getElementById(id);
 const bigbox = $('bigbox'), bigsend = $('bigsend'), query = $('query'), cam = $('cam'), content = $('content');
 const seq = $('seq'), sctx = seq.getContext('2d'), sb = $('sb'), callout = $('callout'), lline = $('lline'), ldot = $('ldot');
-const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2'), send = $('send');
-const phoneBits = ['device', 'screenimg', 'patch', 'island', 'glare'].map($).concat([...document.querySelectorAll('.btn')]);
+const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2'), send = $('send'), dark = $('dark');
 content.style.transform = `translate(${-2 * S}px, ${-2 * S}px) scale(${S})`;
 const frames = [];
 let roleFont = 26;
@@ -205,9 +212,17 @@ window.seek = (t) => {
   const K = towards(K0, 1, e);
   const a0 = { x: BOX3.cx - BOX3.w / 2, y: BOX3.top }, a1 = { x: T1.x + (PBOX.x - 2) * S, y: T1.y + (PBOX.y - 2) * S };
   const camT = camAt(K, { x: lerp(a0.x, a1.x, e), y: lerp(a0.y, a1.y, e) });
-  cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${camT.y.toFixed(3)}px) scale(${K.toFixed(5)})`;
-  const phone = smooth(clamp((e - 0.08) / 0.55)).toFixed(3);
-  phoneBits.forEach((el) => { el.style.opacity = phone; });
+  // ...and at the end it drops away super fast, fading (as the other phones leave)
+  const lv = clamp((t - LEAVE - 0.1) / 0.22);
+  cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${(camT.y + 420 * lv * lv).toFixed(3)}px) scale(${K.toFixed(5)})`;
+  cam.style.opacity = (1 - smooth(lv)).toFixed(3);
+  // The screen grows out from around the search bar to the whole phone (frame included), solid all the way: a rounded
+  // clip on the phone, from the bar's edges (in the screen's px) to past the frame
+  const rv = smoother(clamp(e / 0.55));
+  const ins = [lerp(725.9, -26, rv), lerp(14.3, -26, rv), lerp(28.8, -26, rv), lerp(14.25, -26, rv)];
+  cam.style.clipPath = rv >= 1 ? '' : `inset(${ins.map((v) => v.toFixed(2) + 'px').join(' ')} round ${lerp(32.6, 80, rv).toFixed(2)}px)`;
+  // the background turns to the night one as it pulls back
+  dark.style.opacity = smooth(clamp((e - 0.05) / 0.6)).toFixed(3);
 
   // Tap send: the thumb glides in and presses; the recorded results crossfade in (as in the main film)
   const u = t - TAP, press = clamp(u / 0.1) * (1 - clamp((u - 0.22) / 0.22));
@@ -238,14 +253,15 @@ window.seek = (t) => {
 
   // "Why Jordan" (the main film's calloutAt): slides in from the right, its lime leader reaching Jordan's card
   const ce = spring(t - NOTE[0], NOTE[1], NOTE[2]);
-  const cx = 1430 + (1 - ce) * 460, cy = 270 + (1 - ce) * 40, ch = callout.offsetHeight;
-  callout.style.opacity = t >= NOTE[0] - 0.01 ? '1' : '0';
+  const cout = smooth(clamp((t - LEAVE) / 0.35));
+  const cx = 1430 + (1 - ce) * 460 + cout * 600, cy = 270 + (1 - ce) * 40, ch = callout.offsetHeight;
+  callout.style.opacity = t >= NOTE[0] - 0.01 ? (1 - cout).toFixed(3) : '0';
   callout.style.transform = `translate(${cx.toFixed(1)}px, ${cy.toFixed(1)}px)`;
   const lp = smooth(clamp((t - NOTE[0] - 0.15) / 0.4));
   const tgt = { x: T1.x + 215 * 393 / 390, y: T1.y + 270 * 852 / 844 };
   const x0 = cx, y0 = cy + ch / 2, lx = lerp(x0, tgt.x, lp), ly = lerp(y0, tgt.y, lp);
   lline.setAttribute('x1', x0); lline.setAttribute('y1', y0); lline.setAttribute('x2', lx); lline.setAttribute('y2', ly);
-  lline.style.opacity = ldot.style.opacity = lp > 0 ? '1' : '0';
+  lline.style.opacity = ldot.style.opacity = lp > 0 ? (1 - smooth(clamp((t - LEAVE) / 0.2))).toFixed(3) : '0';
   ldot.setAttribute('cx', lx); ldot.setAttribute('cy', ly);
 };
 window.DURATION = DURATION;

@@ -17,7 +17,9 @@ version): the collapsed card widens into "First meeting" and opens, each settlin
 in, and halfway the camera pulls back to the phone (Jordan's profile, scrolled to Moments); "Play it back." fades in
 either side of it. Then the main film's "Ask your own notes." and its three prompts (prompts after the headline),
 then "I want to find someone to go climbing with me" typed in a search box that fills the frame (`find.html`): the camera
-pulls back to the box, then to the phone; send, the main film's recorded results, and its "Why Jordan" note.
+pulls back to the box, then to the phone (on the main film's night background); send, the main film's recorded results,
+and its "Why Jordan" note. It ends on the main film's last scene ("Peepl. Capture. Search. Reconnect."), its phone
+showing the updated mindmap.
 
 **Designs:** Figma file `bV6DQFxu5SHuF6hE5NIDeb`, page "Video Edits": Frames 1-3 and 16-19 (hook), 25, 22, 23, 26, 27,
 28 (Introducing Peepl), then the phone frames 427:6972 / 427:6981 and "2.6 Person profile / View details" (427:7102,
@@ -35,6 +37,8 @@ screen recording reference (letters fade and sharpen in, the caret jumps after e
 - `find.html`: the find-someone flow, Figma 450:10511 / 452:10657 / 452:10683 / 452:10693, assets in `assets/find/`
   (plus the main film's recorded results, `../assets/figma/v14/ask_seq`, with "[Startup]" redrawn as "Peepl").
 - `create.html`: "Speak into the mic" to Jordan's new profile (same contract), assets in `assets/create/`.
+- `make_end_assets.mjs`: draws `assets/end/home_jl.png` (the intro's phone screen, for the main film's last scene) and
+  `assets/find/dark.png` (its night background, for find.html).
 - `vince_copy.py`: the edits make_cut.sh makes to temporary copies of the main film to render its shots.
 - `typing.js`: the typed lines all three use (typing, caret, re-centering, cut-zooms, exits, Vince-style highlights).
 - `dots.js`: the colorful grid's dot positions and colors, from Figma Frame 17.

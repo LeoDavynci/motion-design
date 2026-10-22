@@ -17,7 +17,10 @@
 #   7. Vince's "Ask your own notes." and its three prompts (v17, temporary copy: prompts after the headline, smoother
 #      highlight, a beat, then it all fades out), 0.8s crossfade in.
 #   8. Find someone (find.html): "I want to find someone to go climbing with me" typed in a search box that fills the frame,
-#      pulled back to the box, then to the phone; send, the recorded results, "Why Jordan". 0.8s crossfade in.
+#      pulled back to the box, then to the phone (its screen growing out from the box, the background turning to the
+#      night one); send, the recorded results, "Why Jordan" (glass); the note and the phone leave. 0.8s crossfade in.
+#   9. Vince's last scene ("Peepl. Capture. Search. Reconnect." and the phone, v17 copy with the updated mindmap screen,
+#      assets/end/home_jl.png from make_end_assets.mjs), 0.8s crossfade in, to the end of his film.
 # The "Meeting people is easy" shot stays the one from his first version (commit 964dee0), which this cut was timed on.
 # Run from anywhere:  zsh ~/motion-design/hook-150/make_cut.sh [draft|final]
 #   draft (default): 30fps, 2 sub-frames of motion blur. For checking timing while iterating.
@@ -82,12 +85,23 @@ AFROM=${RANGE% *}; ATO=${RANGE#* }
 node hook-150/render_segment.mjs --page "$TMP" --from "$AFROM" --to "$ATO" --fps "$FPS" --sub "$SUB" --out hook-150/out/ask.mp4
 rm -f "$TMP"
 node hook-150/render_segment.mjs --page hook-150/find.html --from 0 --to "$FIND_DUR" --fps "$FPS" --sub "$SUB" --out hook-150/out/find.mp4
+
+# Vince's v17 last scene, with the updated phone screen (his file is not changed)
+TMP=.cut-end.tmp.html
+python3 hook-150/vince_copy.py end < index.html > "$TMP" || { rm -f "$TMP"; exit 1; }
+RANGE=$(node -e "import('playwright').then(async({chromium})=>{const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await b.newPage();await p.goto('file://'+process.cwd()+'/$TMP');await p.evaluate(()=>window.ready);console.log(await p.evaluate(()=>[window.filmTime(window.BGT.end)-0.3,window.TOTAL].map((x)=>x.toFixed(3)).join(' ')));await b.close()})")
+EFROM=${RANGE% *}; ETO=${RANGE#* }
+node hook-150/render_segment.mjs --page "$TMP" --from "$EFROM" --to "$ETO" --fps "$FPS" --sub "$SUB" --out hook-150/out/end-raw.mp4
+rm -f "$TMP"
+# his film ends as its last line settles: hold that last frame 1.5s
+ffmpeg -y -loglevel error -i hook-150/out/end-raw.mp4 -vf "tpad=stop_mode=clone:stop_duration=1.5" -c:v libx264 -crf 16 -pix_fmt yuv420p hook-150/out/end.mp4
 STORY_DUR=$(node -e "console.log((${STO} - ${SFROM} + ${HOLD}).toFixed(3))")
 O5=$(node -e "console.log((${O4} + ${STORY_DUR} - ${STORY}).toFixed(3))")
 O6=$(node -e "console.log((${O5} + ${MOMENT_DUR} - ${STORY}).toFixed(3))")
 O7=$(node -e "console.log((${O6} + ${ATO} - ${AFROM} - ${STORY}).toFixed(3))")
-ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 -i hook-150/out/moment.mp4 -i hook-150/out/ask.mp4 -i hook-150/out/find.mp4 \
-    -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4}[d];[d][5:v]xfade=transition=fade:duration=${STORY}:offset=${O5}[e];[e][6:v]xfade=transition=fade:duration=${STORY}:offset=${O6}[f];[f][7:v]xfade=transition=fade:duration=${STORY}:offset=${O7},format=yuv420p[v]" \
+O8=$(node -e "console.log((${O7} + ${FIND_DUR} - ${STORY}).toFixed(3))")
+ffmpeg -y -loglevel error -i hook-150/out/silent.mp4 -i hook-150/out/vince-problem.mp4 -i hook-150/out/intro.mp4 -i hook-150/out/create.mp4 -i hook-150/out/story.mp4 -i hook-150/out/moment.mp4 -i hook-150/out/ask.mp4 -i hook-150/out/find.mp4 -i hook-150/out/end.mp4 \
+    -filter_complex "[0:v][1:v]xfade=transition=fade:duration=${FADE}:offset=${O1}[a];[a][2:v]xfade=transition=smoothright:duration=${WIPE}:offset=${O2}[b];[b][3:v]xfade=transition=fade:duration=${PALE}:offset=${O3}[c];[c][4:v]xfade=transition=fade:duration=${STORY}:offset=${O4}[d];[d][5:v]xfade=transition=fade:duration=${STORY}:offset=${O5}[e];[e][6:v]xfade=transition=fade:duration=${STORY}:offset=${O6}[f];[f][7:v]xfade=transition=fade:duration=${STORY}:offset=${O7}[g];[g][8:v]xfade=transition=fade:duration=${STORY}:offset=${O8},format=yuv420p[v]" \
     -map "[v]" -c:v libx264 -crf 16 -r "$FPS" hook-150/out/peepl-film-draft.mp4
 cp hook-150/out/silent.mp4 hook-150/out/peepl-hook-150.mp4
 echo done
