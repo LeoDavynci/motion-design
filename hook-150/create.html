@@ -175,7 +175,7 @@ const NOTE_IN = SENT + 0.2, MAKING_IN = SENT + 0.6;
 const SKEL = SENT + 1.25, MADE = SKEL + 1.35;
 // The phone leaves first, sliding up quickly as it fades; the cut's 0.8s background crossfade into Vince's film starts
 // 0.15s later, so the phone is gone before the backgrounds have changed much
-const LEAVE = [MADE + 2.0, 0.22];
+const LEAVE = [MADE + 1.1, 0.22];   // a short beat on the new card, then on (user's call: the pause was too long)
 const DURATION = LEAVE[0] + 0.15 + 0.8;
 
 const smoother = (x) => x * x * x * (x * (6 * x - 15) + 10);

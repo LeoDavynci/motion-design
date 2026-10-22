@@ -41,7 +41,8 @@
       0 46px 90px -16px rgba(8, 4, 14, 0.42), 0 14px 30px -10px rgba(8, 4, 14, 0.25); }
   #device i { position: absolute; inset: 4.7px; border-radius: 66px; background: #07060a; box-shadow: inset 0 0 0 0.6px rgba(255, 255, 255, 0.08); }
   .btn { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #1d1e21, #5a5b60 55%, #2a2b2f); }
-  #screen { position: absolute; left: 0; top: 0; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; }
+  #screen { position: absolute; left: 0; top: 0; width: 393px; height: 852px; border-radius: 55px; overflow: hidden;
+    background: linear-gradient(90deg, #f9f9f9, #fae8e0); }   /* the screen image's own corners are transparent: its colours behind them */
   #glare { position: absolute; inset: 0; border-radius: 55px;
     background: linear-gradient(118deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 28%, rgba(255, 255, 255, 0) 42%); }
   #island { position: absolute; left: 133.5px; top: 11px; width: 126px; height: 37px; border-radius: 19px; background: #000; }
@@ -81,9 +82,6 @@
 <body>
 <div id="c">
   <img class="flat" src="assets/find/dark.png" alt="">
-  <div id="bigbox"><div id="bigsend"><img src="assets/find/send.svg" alt=""></div></div>
-  <div id="text"></div>
-  <p id="query"></p>
   <div id="cam">
     <div class="btn" style="left:-19.2px;top:123.5px;height:27.3px"></div>
     <div class="btn" style="left:-19.2px;top:183.2px;height:56.2px"></div>
@@ -102,6 +100,9 @@
       <div id="glare"></div>
     </div>
   </div>
+  <div id="bigbox"><div id="bigsend"><img src="assets/find/send.svg" alt=""></div></div>
+  <div id="text"></div>
+  <p id="query"></p>
   <svg id="leader" width="1920" height="1080"><line id="lline" stroke="#c6f04a" stroke-width="3" stroke-linecap="round"/>
     <circle id="ldot" r="8" fill="#c6f04a" stroke="rgba(22,18,28,0.55)" stroke-width="2"/></svg>
   <div id="callout"><b>WHY JORDAN</b><p>Climbs Tuesdays and wants a climbing buddy.</p></div>
@@ -123,8 +124,8 @@ const towards = (a, b, x) => a * (b / a) ** x;
 //    me", the line staying centered (452:10657)
 // 3. The camera pulls back: the box shows whole, the query settles into it, the send button comes in (452:10683)
 // 4. It pulls back again to the phone, "Search for someone by..." around the box (452:10693)
-//    The phone's screen grows out from around the search bar (no see-through phone), and the background turns to the
-//    main film's night background, as in its last scene
+//    It was the phone's screen all along (the light background); pulling back shows the phone on the main film's night
+//    background, as in its last scene
 // 5. As in the main film: a tap on send, the recorded results come in (the query moves up, "Reading your notes...",
 //    Jordan Lee and Zara Ahmed), and the "Why Jordan" note points at Jordan's card
 // 6. The note slides away, the phone drops away fast, and the night background is left for the main film's last scene
@@ -154,15 +155,20 @@ const LINES = [{
 const { lines, measure, paint } = makeLines(document.getElementById('text'), LINES, { shadow: false });
 
 // ---- Geometry ----
-// The box in the Figma frames (px in the frame): filling it at 200px, a band at 100px, whole at 4.55x
-const BOX1 = { cx: 886.5, top: -68, w: 2327, h: 1173, r: 208, b: 6.5 };
-const BOX2 = { cx: 959.5, top: 392, w: 2327, h: 609, r: 208, b: 6.5 };
-const BOX3 = { cx: 146 + 1628.9 / 2, top: 446, w: 1628.9, h: 95.5 * 4.55, r: 32 * 4.55, b: 4.55 };
+// It all happens on the phone's screen: the camera starts close enough that the screen (its light background) fills the
+// frame, and stays there while the query is typed; pulling back shows the phone, the night background around it.
 // The phone: content in the Figma frame's px (390 x 844, 2px border cropped), shown at s = 393 / 386
 const S = 393 / 386;
 const PBOX = { x: 16, y: 715 };                               // the search bar's top-left in the phone frame
-const K0 = 4.55 / S;                                          // the phone at which its search bar is BOX3
+const K0 = (1920 / 393) * 1.006;                              // the screen just fills the frame's width (the bar: ~1790px)
 const T1 = { x: 763.5, y: 114 };
+// The box in the Figma frames (px in the frame): filling it at 200px, a band at 100px, then whole: the phone's search
+// bar at K0, centered on Figma 452:10683's box (it's a little bigger than the Figma's 4.55x, so the screen fills the frame)
+const BOX1 = { cx: 886.5, top: -68, w: 2327, h: 1173, r: 208, b: 6.5 };
+const BOX2 = { cx: 959.5, top: 392, w: 2327, h: 609, r: 208, b: 6.5 };
+const BK = S * K0;                                            // phone px -> frame px at K0
+// (its top at 462 so the screen also reaches the bottom of the frame: the screen ends 126px of the phone below the bar)
+const BOX3 = { cx: 960, top: 462, w: 358 * BK, h: 95.5 * BK, r: 32 * BK, b: BK };
 const camAt = (K, anchorScreen) => ({ x: anchorScreen.x - (PBOX.x - 2) * S * K, y: anchorScreen.y - (PBOX.y - 2) * S * K });
 const SENDC = { x: 16 + 358 - 9 - 20, y: 715 + 95.5 - 9 - 20 }; // the send button's center (phone frame px)
 
@@ -171,6 +177,7 @@ const $ = (id) => document.getElementById(id);
 const bigbox = $('bigbox'), bigsend = $('bigsend'), query = $('query'), cam = $('cam'), content = $('content');
 const seq = $('seq'), sctx = seq.getContext('2d'), sb = $('sb'), callout = $('callout'), lline = $('lline'), ldot = $('ldot');
 const thumb = $('thumb'), r1 = $('r1'), r2 = $('r2'), send = $('send');
+const screenEl = $('screen'), glareEl = $('glare'), deviceEl = $('device'), deviceIn = deviceEl.querySelector('i');
 // The query's copy for settling into the box: each letter with its typing time (as the typed line), a caret after them
 const QCH = LINES[0].parts.flatMap((p) => [...p.text].map((ch, i) => ({ ch, at: p.start + i * p.every })));
 const qspans = QCH.map(({ ch }) => { const sp = document.createElement('span'); sp.textContent = ch; query.appendChild(sp); return sp; });
@@ -189,8 +196,8 @@ window.seek = (t) => {
   const bw = mix('w'), bh = mix('h');
   Object.assign(bigbox.style, { left: `${mix('cx') - bw / 2}px`, top: `${mix('top')}px`, width: `${bw}px`, height: `${bh}px`,
     borderRadius: `${mix('r')}px`, borderWidth: `${mix('b')}px`,
-    boxShadow: `0 ${(8 * 4.55 * (0.5 + 0.5 * st)).toFixed(1)}px ${(32 * 4.55).toFixed(1)}px rgba(22, 18, 28, 0.07)` });
-  const sendS = 40 * 4.55, inset = 9 * 4.55 - mix('b');   // the phone's send button: 8px in from the inside of its 1px border
+    boxShadow: `0 ${(8 * BK * (0.5 + 0.5 * st)).toFixed(1)}px ${(32 * BK).toFixed(1)}px rgba(22, 18, 28, 0.07)` });
+  const sendS = 40 * BK, inset = 9 * BK - mix('b');   // the phone's send button: 8px in from the inside of its 1px border
   Object.assign(bigsend.style, { width: `${sendS}px`, height: `${sendS}px`, right: `${inset}px`, bottom: `${inset}px`,
     opacity: smooth(clamp((st - 0.35) / 0.5)).toFixed(3), transform: `scale(${(0.8 + 0.2 * smooth(clamp((st - 0.35) / 0.6))).toFixed(3)})` });
 
@@ -205,16 +212,15 @@ window.seek = (t) => {
     query.insertBefore(qcaret, qspans[n] || null);
     qcaret.style.opacity = t < QCH[QCH.length - 1].at + 0.2 ? '1' : '0';
     query.style.letterSpacing = `${lerp(-4, 0, st).toFixed(3)}px`;
-    const k = lerp(1, 0.6825, st);
-    const x0 = L.spans[0].getBoundingClientRect().left, x1 = 146 + 13 * 4.55;   // where the (hidden) typed line is now
-    const y0 = 540, y1 = 446 + (12 + 1 + 9.75) * 4.55;
+    const k = lerp(1, (15 * BK) / 100, st);
+    const x0 = L.spans[0].getBoundingClientRect().left, x1 = BOX3.cx - BOX3.w / 2 + 13 * BK;   // where the (hidden) typed line is now
+    const y0 = 540, y1 = BOX3.top + (12 + 1 + 9.75) * BK;
     query.style.transform = `translate(${lerp(x0, x1, st).toFixed(2)}px, ${(lerp(y0, y1, st) - 50).toFixed(2)}px) scale(${k.toFixed(5)})`;
   }
   // Once it's whole, the phone takes over (its search bar is exactly where the box is)
   const onPhone = t >= SETTLE[0] + SETTLE[1];
-  bigbox.style.display = onPhone ? 'none' : '';
+  bigbox.style.display = onPhone ? 'none' : '';   // (the phone is under it all along, its screen the light background)
   if (onPhone) query.style.display = 'none';
-  cam.style.display = onPhone ? '' : 'none';
 
   // The camera pulls back to the phone; its screen comes up around the search bar
   const e = smoother(clamp((t - PULL[0]) / PULL[1]));
@@ -225,11 +231,14 @@ window.seek = (t) => {
   const lv = clamp((t - LEAVE - 0.1) / 0.22);
   cam.style.transform = `translate(${camT.x.toFixed(3)}px, ${(camT.y + 420 * lv * lv).toFixed(3)}px) scale(${K.toFixed(5)})`;
   cam.style.opacity = (1 - smooth(lv)).toFixed(3);
+  // This close, the screen's rounded corners (270px at K0) would cut into the frame's corners: they're square until it
+  // pulls back, then round to the phone's 55px early in the pull
+  const rr = 55 * smoother(clamp(e / 0.3));
+  screenEl.style.borderRadius = glareEl.style.borderRadius = `${rr.toFixed(2)}px`;
+  deviceEl.style.borderRadius = `${(rr + 15.7).toFixed(2)}px`;
+  deviceIn.style.borderRadius = `${(rr + 11).toFixed(2)}px`;
   // The screen grows out from around the search bar to the whole phone (frame included), solid all the way: a rounded
   // clip on the phone, from the bar's edges (in the screen's px) to past the frame
-  const rv = smoother(clamp(e / 0.55));
-  const ins = [lerp(725.9, -26, rv), lerp(14.3, -26, rv), lerp(28.8, -26, rv), lerp(14.25, -26, rv)];
-  cam.style.clipPath = rv >= 1 ? '' : `inset(${ins.map((v) => v.toFixed(2) + 'px').join(' ')} round ${lerp(32.6, 80, rv).toFixed(2)}px)`;
 
 
   // Tap send: the thumb glides in and presses; the recorded results crossfade in (as in the main film)
