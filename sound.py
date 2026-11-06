@@ -96,7 +96,12 @@ at(Pp('moments', 18.6), swell(1.6, 900), 0.22)
 at(Pp('moments', 20.6), thock(240, 0.15), 0.45); at(Pp('moments', 20.7), bloom(392, 1.4), 0.25)
 # ask
 at(Pp('ask', 22.7), thock(240, 0.15), 0.45); at(Pp('ask', 22.9), thock(200, 0.2), 0.3)
-for i in range(0, 45, 2): at(Pp('ask', 23.0 + i * 0.031), thock(300 + (i % 3) * 20, 0.05), 0.06)
+def key(space=False):  # muted keyboard thock: low body + soft click, seeded variation
+    f = (150 if space else 230) * rng.uniform(0.9, 1.12); d = 0.07; t = tt(d)
+    body = lp(np.sin(2*np.pi*f*(1 + 0.4*np.exp(-t*60))*t) * np.exp(-t*50), 600)
+    return body + hp(lp(noise(d), 2500), 900) * np.exp(-t*160) * 0.25
+QS = 'I want to find someone to go climbing with me'
+for k, ch in enumerate(QS): at(Pp('ask', 23.1 + (k + 1) * 0.031) + rng.uniform(0, 0.006), key(ch == ' '), rng.uniform(0.2, 0.3))  # one per letter, synced to index.html tType/dt
 at(Pp('ask', 24.5), thock(240, 0.15), 0.45); at(Pp('ask', 24.6), swell(0.8, 900), 0.28)
 for k in range(3): at(Pp('ask', 25.2 + k * 0.9), thock(220, 0.1), 0.12)                       # thinking steps
 at(Pp('ask', 27.8), thock(180, 0.25), 0.5); at(Pp('ask', 27.85), bloom(329.63, 1.2), 0.22)    # results settle
